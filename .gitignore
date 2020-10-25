@@ -10,6 +10,7 @@ dist/
 build/
 project_bed/
 
+*.exe
 
 *.log
 *.pot
