@@ -2,6 +2,7 @@ import pandas
 
 from modules import PROJ_CONST as PR, PDF_CONST as PFC
 from modules.PdfPage import PdfPage
+from modules.func import *
 
 
 class PdfDoc:
@@ -15,13 +16,14 @@ class PdfDoc:
         self.in_file_name = in_file_name
         self._pages = None
         self.__all_pages_product_dict = {}  # dictionary that will hold the items of all product tables
+        self.jsondata = read_json_data(PR.DOC_SELECTIONS_COORDINATES)
 
     def export_cumulative_dict(self):
         df = pandas.DataFrame(self.__all_pages_product_dict)
         df.to_csv(PR.DOC_PRODUCT_TABLE, index=False)
 
     def create_pages(self):
-        _pages = [PdfPage(self.in_file_name, pagenumber=i) for i in
+        _pages = [PdfPage(infilename=self.in_file_name, pagenumber=i, coordinates=extract_page_data_from_json_data(json_data=self.jsondata, pagenumber=i)) for i in
                   range(self.page_start, self.page_start + self.n_pages)]  # list of PdfPage objects
         self._pages = _pages
 

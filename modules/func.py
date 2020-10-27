@@ -180,7 +180,9 @@ def read_json_data(json_file_name):
 
 def extract_page_data_from_json_data(json_data, pagenumber):
     """ :param json_data is a list of dictionaries containing selections from the whole pdf document
-    :param pagenumber is current page number"""
+    :param pagenumber is current page number
+    :returns page_data - a list of dictionaries containing keys: page, extraction_method, x1, x2, y1, y2, width, height
+         which is relevant to the pagenumber only"""
     page_data = [data for data in json_data if data["page"] == pagenumber]
     return page_data
 

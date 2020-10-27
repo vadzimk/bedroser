@@ -13,3 +13,5 @@ TABULA_TEMPLATE = ''
 
 OUTPUTXLS = 'output.xlsx'
 
+DOC_SELECTIONS_COORDINATES = './selections_coordinates.json'
+
