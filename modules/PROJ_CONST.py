@@ -9,6 +9,7 @@ DOC_TARGET = './project_bed/target.csv'
 DOC_UOM = './project_bed/uom.csv'
 
 TARGET_CONFIG = './TARGET_CONFIG.csv'
+TABULA_TEMPLATE = ''
 
 OUTPUTXLS = 'output.xlsx'
 

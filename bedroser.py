@@ -1,7 +1,7 @@
 from modules.func import *
 import sys
 import time
-
+from modules.PdfDoc import PdfDoc
 
 def main():
     try:

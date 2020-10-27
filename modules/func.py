@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import shutil
@@ -19,7 +20,7 @@ def cleanup():
 def create_project():
     # create directory for the project
     Path(PR.DIR_PROJECT).mkdir(parents=True, exist_ok=True)
-    # Path(PR.DIR_TABULATED_CSV).mkdir(parents=True, exist_ok=True)
+    Path(PR.DIR_TABULATED_CSV).mkdir(parents=True, exist_ok=True)
     # Path(PR.DIR_PRODUCT_TABLES).mkdir(parents=True, exist_ok=True)
     # Path(PR.DIR_TREATED_ROWS).mkdir(parents=True, exist_ok=True)
 
@@ -145,25 +146,52 @@ def ask_for_starting_page(total_pages):
 #     df = pandas.DataFrame(dictionary)
 #     df.to_csv(filename, index=False)
 #
-#
-# def export_dict_ragged_to_csv(d, filename):
-#     """ export ragged dictionary in csv"""
-#     with open(filename, "w", newline='') as outfile:
-#         writer = csv.writer(outfile)
-#         writer.writerow(d.keys())
-#         max_len = 0  # max len of list in a key
-#         for v in d.values():
-#             if len(v) > max_len:
-#                 max_len = len(v)
-#         rows = []
-#         for i in range(max_len):
-#             row = []
-#             for key in d.keys():
-#                 if i < len(d[key]):
-#                     item = d[key][i]
-#                 else:
-#                     item = ''
-#                 row.append(item)
-#             rows.append(row)
-#
-#         writer.writerows(rows)
+
+def export_dict_ragged_to_csv(d, filename):
+    """ export ragged dictionary in csv"""
+    with open(filename, "w", newline='') as outfile:
+        writer = csv.writer(outfile)
+        writer.writerow(d.keys())
+        max_len = 0  # max len of list in a key
+        for v in d.values():
+            if len(v) > max_len:
+                max_len = len(v)
+        rows = []
+        for i in range(max_len):
+            row = []
+            for key in d.keys():
+                if i < len(d[key]):
+                    item = d[key][i]
+                else:
+                    item = ''
+                row.append(item)
+            rows.append(row)
+
+        writer.writerows(rows)
+
+
+def read_json_data(json_file_name):
+    """ :returns list of dictionaries correspoinding to json objects """
+    with open(json_file_name, 'r') as json_file:
+        data = json.load(json_file)
+
+    return data
+
+
+def extract_page_data_from_json_data(json_data, pagenumber):
+    """ :param json_data is a list of dictionaries containing selections from the whole pdf document
+    :param pagenumber is current page number"""
+    page_data = [data for data in json_data if data["page"] == pagenumber]
+    return page_data
+
+
+def write_line_list_to_csv(aList, filename):
+    """ writes lsit of lines into csv filename"""
+    # for testing
+    print("write_line_list_to_csv:")
+    for row in aList:
+        print(row)
+
+    with open(filename, "w", newline='', encoding='utf-8') as f:
+        wr = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
+        wr.writerows(aList)
