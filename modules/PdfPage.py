@@ -10,11 +10,6 @@ from modules.func import *
 from pprint import pprint
 
 
-# stock_table
-# color_table
-# packaging_table
-
-
 class PdfPage:
     """ converts Pdf page to csv, creates a list of PdfLine objects for each line and passes it to PdfProductTable and PdfColorTable"""
 
@@ -38,7 +33,7 @@ class PdfPage:
         #     print("")
 
         # # write to list of template rows for testing and tabulated csv only
-        self.list_of_template_rows = self.convert_list_of_dataframes_tolist_of_lines(self.selection_dataframes)
+        self.list_of_page_tabula_rows = self.convert_list_of_dataframes_tolist_of_lines(self.selection_dataframes)
         # # print for testing
         # for my_df in self.selection_dataframes:
         #     selection_lines = self.convert_list_of_dataframes_tolist_of_lines([my_df])
@@ -54,20 +49,26 @@ class PdfPage:
         self.color_areas = self.set_color_areas()
         self.packaging_areas = self.set_packaging_areas()
 
-        print("title_areas:")
+        print("\ntitle_areas:")
         print(len(self.title_areas), self.title_areas)
-        print("stock_areas:")
-        print(len(self.stock_areas), self.stock_areas)
-        print("color_areas:")
+        print("\ncolor_areas:")
         print(len(self.color_areas), self.color_areas)
-        print("packaging_areas:")
+        print("\nstock_areas:")
+        print(len(self.stock_areas), self.stock_areas)
+        print("\npackaging_areas:")
         print(len(self.packaging_areas), self.packaging_areas)
+
+        # dictionary that will be passed to the PageProductTable to create a product table for current page
+        self.areas = {'title_areas': self.title_areas,
+                      'color_areas': self.color_areas,
+                      'stock_areas': self.stock_areas,
+                      'packaging_areas': self.packaging_areas}
 
         self._contains_color_table = self.contains_color_table()
 
         # constructs list of PdfLine objects
         # for each template row make an object that contains methods that can fetch attributes
-        self._pdf_line_list = [PdfLine(line) for line in self.list_of_template_rows]
+        self._pdf_line_list = [PdfLine(line) for line in self.list_of_page_tabula_rows]
 
         # self._page_contains_color_info = self.page_contains_color_info()
 
@@ -82,12 +83,12 @@ class PdfPage:
         self._product_table = None  # main table of the page containing its products together with all attributes
 
         # export tabulated csv for current pagenumber
-        write_line_list_to_csv(self.list_of_template_rows, self.midfilename)
+        write_line_list_to_csv(self.list_of_page_tabula_rows, self.midfilename)
 
     def contains_color_table_header(self):
         """ :returns true if guessed rows contain "- COLORS" which is usually in color table header"""
         contains = False
-        for row in self.list_of_template_rows:
+        for row in self.list_of_page_tabula_rows:
             row = [str(item) for item in row]
             row_string = "".join(row)
             if "Colors" in row_string:
@@ -99,17 +100,6 @@ class PdfPage:
         contains = self.contains_color_table_header()
         return contains
 
-    # def page_contains_color_info(self):
-    #     """ :returns true if the product row contains color column not empty false otherwise"""
-    #     contains = False
-    #     max_len = 0
-    #     for line in self._pdf_line_list:
-    #         if line.contains_color():
-    #             contains = True
-    #             break
-    #
-    #     return contains
-
     def create_product_table(self, external_color_list=None):
         # print(self.pagenumber, "PdfPage._page_contains_color_info", self._page_contains_color_info)
         # print(self.pagenumber, "PdfPage._color_list", self._color_list)
@@ -119,8 +109,8 @@ class PdfPage:
         # ####### print(self.pagenumber, "contains_color_note", self.contains_color_note())
 
         # if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
-        self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
-                                               self._color_list)
+        self._product_table = PageProductTable(self._pdf_line_list, self.list_of_page_tabula_rows, self.pagenumber,
+                                               self._color_list, areas=self.areas)
         # else:  # page doesn't contin color info in itself
         #     self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
         #                                            external_color_list)

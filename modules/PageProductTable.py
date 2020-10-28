@@ -8,7 +8,8 @@ import csv
 class PageProductTable:
     """ contains products in a dictionary """
 
-    def __init__(self, lines, guessed_rows, page_number, colors):
+    def __init__(self, lines, guessed_rows, page_number, colors, areas):
+        self._areas = areas
         self._pagenumber = page_number
         self.lines = lines
         # print("guessed_rows")
@@ -48,6 +49,13 @@ class PageProductTable:
         # self.export_treated_rows()
 
     def build_table(self):
+
+
+
+
+
+
+
         """ sees what fields are detected by the PdfLine and builds product table"""
         for line in self.lines:  # line comes form fixed column recognition
 
