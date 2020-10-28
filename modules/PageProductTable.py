@@ -2,6 +2,7 @@ import pandas
 
 import modules.PDF_CONST as PFC
 from modules import PROJ_CONST as PR
+from modules.PdfLine import PdfLine
 import csv
 
 
@@ -49,7 +50,20 @@ class PageProductTable:
         # self.export_treated_rows()
 
     def build_table(self):
+        print("build_table:")
+        a = self._areas['title_areas']
+        print(a)
+        title_area_pdflines =  [PdfLine(line) for line in self._areas['title_areas']]
 
+        # todo p 42 contains many color areas and packaging info on the next page!
+        # todo: move the
+        #    #  represent selections as lists of lines
+        #         self.selections_as_line_lists = self.convert_list_of_dataframes_to_selection_lines(self.selection_dataframes)
+        #
+        #  todo ; to the Pageproduct table to manipulate
+        #  todo ; areas are sorted thus can be processed successively
+        #  todo ; for each area in the page
+        #  todo ; pass current_area to create a list of PdfLines and extract relevant properties
 
 
 

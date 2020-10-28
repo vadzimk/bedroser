@@ -215,7 +215,7 @@ class PdfPage:
             for line in selection:
                 flag = False
                 for item in line:
-                    if "Packaging Information" in item:
+                    if "Packaging Information" in str(item):
                         flag = True
                         break
                 if flag:
