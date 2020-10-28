@@ -6,20 +6,23 @@ class PdfLine:
 
     @staticmethod
     def token_is_blank(csv_list_item):
-        return csv_list_item == '\"\"' or not csv_list_item
+        return csv_list_item == '\"\"' or not csv_list_item or "Unnamed:" in str(csv_list_item)
 
     def __init__(self, tabula_csv_reader_list_line):
         """ @:param page_data_set for better detection of tokens"""
         # self._page_data_set = page_data_set
         self._tabula_line = tabula_csv_reader_list_line
+
         # self._row = self.treat_row()  # check for matches with page_data_set
 
-        # self._row_len = len(self._row)  # number of items in the list representing the row
+        self._line_len = len(self._tabula_line)  # number of items in the list representing the row
         self._num_blanks = self.count_blanks()
         # self._all_cells_filled = self.all_cells_filled()  # applies to a table row only
         self._is_color_table_header = self.is_color_table_header()
         self._is_color_table_row = self.is_color_table_row()
         self._is_product_table_row = self.is_product_table_row()
+
+        print(self._line_len, self._tabula_line)
 
         # print(len(self._row), self._row)
 
@@ -120,7 +123,7 @@ class PdfLine:
         color = None
         if self.contains_color() and self._is_product_table_row:
             index = 3
-            color = self._tabula_line[index]
+            color = str(self._tabula_line[index])
             color = " ".join(color.split())
         # elif self.contains_color() and self._is_color_table_row:
         #     color = ' '.join(self._row).strip()
@@ -159,9 +162,13 @@ class PdfLine:
 
     def is_color_table_header(self):
         is_header = False
-        for item in self._tabula_line:
-            if "COLORS" in str(item):
+        if 'Code' in self._tabula_line:
+            if 'Name' in self._tabula_line:
                 is_header = True
+            else:
+                for item in self._tabula_line:
+                    if "Color" in str(item):
+                        is_header = True
         return is_header
 
     def is_color_table_row(self):

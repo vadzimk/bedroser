@@ -23,7 +23,9 @@ class PdfDoc:
         df.to_csv(PR.DOC_PRODUCT_TABLE, index=False)
 
     def create_pages(self):
-        _pages = [PdfPage(infilename=self.in_file_name, pagenumber=i, coordinates=extract_page_data_from_json_data(json_data=self.jsondata, pagenumber=i)) for i in
+        _pages = [PdfPage(infilename=self.in_file_name,
+                          pagenumber=i,
+                          coordinates=extract_page_data_from_json_data(json_data=self.jsondata, pagenumber=i)) for i in
                   range(self.page_start, self.page_start + self.n_pages)]  # list of PdfPage objects
         self._pages = _pages
 

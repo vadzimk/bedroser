@@ -7,8 +7,12 @@ from modules import PROJ_CONST as PR
 from modules import PDF_CONST as PFC
 from modules.PdfLine import PdfLine
 from modules.func import *
+from pprint import pprint
 
 
+# stock_table
+# color_table
+# packaging_table
 
 
 class PdfPage:
@@ -20,78 +24,65 @@ class PdfPage:
         self.coordinates = coordinates
         print("page:", self.pagenumber)  # print page number while creating
         self.midfilename = '{}tabulated_{}.csv'.format(PR.DIR_TABULATED_CSV, self.pagenumber)
-        # self.list_of_csv_rows = None  # contain list of rows from the csv file obtained from tabula
+        # read all rows of the current page in a list of lists
 
-        # self.html_page_data_set = set()
+        self.selection_dataframes = self.read_with_json_tabula(self.infilename, self.pagenumber, self.coordinates)
 
-        # # read the one page from pdf file with tabula
-        # tabula.convert_into(self.infilename, self.midfilename, output_format='csv', pages=self.pagenumber, stream=True)
+        # # would work if tables were recognized with proper header but there are plenty of small tables each with its own tiltle
+        # self.selection_dicts = self.convert_list_of_dataframes_to_list_of_dict(self.selection_dataframes)
+        # print("dicts")
+        # for my_dict in self.selection_dicts:
+        #     print_dict(my_dict)
+        #     print("")
+        #     pprint(my_dict)
+        #     print("")
 
-        # # read the csv file call it csvfile
-        # with open(self.midfilename, newline='') as csvfile:
-        #     readerObject = csv.reader(csvfile, dialect='excel')  # returns reader object that is an iterator
-        #     self.list_of_csv_rows = list(readerObject)
+        # # write to list of template rows for testing and tabulated csv only
+        self.list_of_template_rows = self.convert_list_of_dataframes_tolist_of_lines(self.selection_dataframes)
+        # # print for testing
+        # for my_df in self.selection_dataframes:
+        #     selection_lines = self.convert_list_of_dataframes_tolist_of_lines([my_df])
+        #     for line in selection_lines:
+        #         print(line)
+        #     print("")
 
-        # # New method of recognition with fixed rows
-        # self.list_of_csv_rows = self.read_fixed_columns_tabula()
+        #  represent selections as lists of lines
+        self.selections_as_line_lists = self.convert_list_of_dataframes_to_selection_lines(self.selection_dataframes)
 
+        self.title_areas = [self.selections_as_line_lists[0]]
+        self.stock_areas = self.set_stock_areas()
+        self.color_areas = self.set_color_areas()
+        self.packaging_areas = self.set_packaging_areas()
 
-        self.list_of_template_rows = self.read_with_json_tabula(self.infilename, self.pagenumber, self.coordinates)
-
-        # #  get data from html pages
-        # html_parser = MyHtmlParser()
-
-        # with open('{}page{}.html'.format(PR.DIR_XPDF, self.pagenumber), 'r') as file:
-        #     data = file.read().replace('\n', '')
-        #     html_parser.feed(data)
-
-        # self.html_page_data_set = html_parser.page_data_set
-        # self.html_page_data_list = html_parser.page_data_list
-
-        # print(f"Html data set: {html_parser.page_data_set}")  # output the pagedata_set for testing+
-        # print(f"Html data list: {self.html_page_data_list}")
-        # for word in html_parser.page_data_list:
-        #     print(word)
+        print("title_areas:")
+        print(len(self.title_areas), self.title_areas)
+        print("stock_areas:")
+        print(len(self.stock_areas), self.stock_areas)
+        print("color_areas:")
+        print(len(self.color_areas), self.color_areas)
+        print("packaging_areas:")
+        print(len(self.packaging_areas), self.packaging_areas)
 
         self._contains_color_table = self.contains_color_table()
 
         # constructs list of PdfLine objects
+        # for each template row make an object that contains methods that can fetch attributes
         self._pdf_line_list = [PdfLine(line) for line in self.list_of_template_rows]
 
-        self._page_contains_color_info = self.page_contains_color_info()
+        # self._page_contains_color_info = self.page_contains_color_info()
 
         self._color_list = None
-        if self._contains_color_table:
-            self._color_list = self.extract_color_list_with_tabula_lattice()
+        # # below initialise the color list
+        # if self._contains_color_table:
+        #     self._color_list = self.extract_color_list_with_tabula_lattice()
         # print("color_list", self._color_list)
         # print("contains color table", self._contains_color_table)
 
         # moved creation of product tables to the PdfDoc class
-        self._product_table = None
+        self._product_table = None  # main table of the page containing its products together with all attributes
 
         # export tabulated csv for current pagenumber
         write_line_list_to_csv(self.list_of_template_rows, self.midfilename)
-
-    # def extract_color_list_from_pdf_line_list(self):
-    #     """if color_table below, extract colors from it"""
-    #     color_list = []
-    #     color_table_header_encountered = False
-    #     for line in self._pdf_line_list:
-    #         if line._is_color_table_header:
-    #             color_table_header_encountered = True
-    #         if line.contains_color() and color_table_header_encountered:
-    #             color_list.append(line.find_item_color())
-    #     return color_list
-
-    # def contains_color_note(self):
-    #     """ :returns true if current page contains note that available colors are below"""
-    #     has_note = False
-    #     for row in self.list_of_csv_rows:
-    #         row = [str(item) for item in row]
-    #         row_string = "".join(row)
-    #         if "available colors" in row_string:
-    #             has_note = True
-    #     return has_note
 
     def contains_color_table_header(self):
         """ :returns true if guessed rows contain "- COLORS" which is usually in color table header"""
@@ -99,65 +90,25 @@ class PdfPage:
         for row in self.list_of_template_rows:
             row = [str(item) for item in row]
             row_string = "".join(row)
-            if "- COLORS" in row_string or "-\rCOLORS" in row_string:
+            if "Colors" in row_string:
                 contains = True
         return contains
 
     def contains_color_table(self):
         """ :returns true if current page contains separate color table on the bottom of the page """
-        # contains = False
-        # note = False
-        # for row in self.list_of_csv_rows:
-        #     row = [str(item) for item in row]
-        #     row_string = "".join(row)
-        #     if "available colors" in row_string:
-        #         note = True
-        #     if note and "COLORS" in row_string:
-        #         contains = True
         contains = self.contains_color_table_header()
         return contains
 
-    # def tabula_detected_color_table(self):
-    #     detected = False
+    # def page_contains_color_info(self):
+    #     """ :returns true if the product row contains color column not empty false otherwise"""
+    #     contains = False
+    #     max_len = 0
     #     for line in self._pdf_line_list:
-    #         for cell in line._tablula_line:
-    #             if 'COLORS' in cell:
-    #                 detected = True
-    #     return detected
-
-    # def extract_color_list_with_tabula_lattice(self):
-    #     # https://tabula-py.readthedocs.io/en/latest/faq.html?highlight=area#how-to-use-area-option
-    #     df = tabula.read_pdf(input_path=self.infilename, pandas_options={'header': None}, output_format="dataframe",
-    #                          pages=self.pagenumber,
-    #                          lattice=True, area=PFC.TABLE_COORDINATES)
-    #     df_list = []
-    #     for item in df:
-    #         item = item.fillna('')
-    #         df_list += item.values.tolist()
+    #         if line.contains_color():
+    #             contains = True
+    #             break
     #
-    #     color_list = []
-    #     color_table_head_encountered = False
-    #     for line in df_list:
-    #         line = " ".join(map(str, line))
-    #         # print("line:", line)
-    #         if "COLORS" in line:
-    #             color_table_head_encountered = True
-    #             # print(color_table_head_encountered)
-    #             continue
-    #         if color_table_head_encountered:
-    #             color_list.append(" ".join(line.split()))
-    #     return color_list
-
-    def page_contains_color_info(self):
-        """ :returns true if the product row contains color column not empty false otherwise"""
-        contains = False
-        max_len = 0
-        for line in self._pdf_line_list:
-            if line.contains_color():
-                contains = True
-                break
-
-        return contains
+    #     return contains
 
     def create_product_table(self, external_color_list=None):
         # print(self.pagenumber, "PdfPage._page_contains_color_info", self._page_contains_color_info)
@@ -167,55 +118,31 @@ class PdfPage:
         # print(self.pagenumber, "contains_color_table_header", self.contains_color_table_header())
         # ####### print(self.pagenumber, "contains_color_note", self.contains_color_note())
 
-        if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
-            self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
-                                                   self._color_list)
-        else:  # page doesn't contin color info in itself
-            self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
-                                                   external_color_list)
-
-    # def read_fixed_columns_tabula(self):
-    #     """ :returns list of rows from pdf using tabula fixed column recognition"""
-    #
-    #     df_list = tabula.read_pdf_with_template(
-    #         input_path=self.infilename, template_path="selections_coordinates.json",
-    #         stream=True
-    #     )
-    #
-    #     df = df_list[0]  # the dictionary is on a singleton list
-    #     df = df.fillna('')  # nan fields are substituted by empty string
-    #
-    #     # # for testing
-    #     # export_dict_ragged_to_csv(df.to_dict(), self.midfilename)
-    #     # convert dataframe to list of rows including header
-    #
-    #     row_list = [list(df.columns), *df.values.tolist()]
-    #
-    #     # for row in row_list:
-    #     #     print(row)
-    #     return row_list
+        # if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
+        self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
+                                               self._color_list)
+        # else:  # page doesn't contin color info in itself
+        #     self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
+        #                                            external_color_list)
 
     def read_with_json_tabula(self, infilename, pagenumber, json_page_data):
-        """ :returns list of rows(each row is a list of strings) of the current pdf page using tabula with area from json file
+        """
+        :return list of dataframes representing all selections on the current page
+        # :returns list of rows(each row is a list of strings) of the current pdf page using tabula with area from json file
         :param json_page_data is a list of dictionaries containing keys: page, extraction_method, x1, x2, y1, y2, width, height
          which is relevant to the current page only"""
-
         selection_coordinates = [(data["y1"], data["x1"], data["y2"], data["x2"]) for data in
                                  json_page_data]  # list of tuples of $y1,$x1,$y2,$x2 coordinates for this page
         selection_coordinates.sort(key=lambda selection: selection[1])  # sort by x1
         selection_coordinates.sort(key=lambda selection: selection[0])  # sort by y1
-
-        row_list = []  # list of rows representing current page
-
-        print("read_with_json_tabula:")
-
+        dict_list = []  # list of rows representing current page
+        # print("read_with_json_tabula:")
         for tuple in selection_coordinates:
             df_list = tabula.read_pdf(
                 input_path=infilename, output_format="dataframe", pages=pagenumber,
                 stream=True, multiple_tables=True, guess=True,
                 area=tuple
             )
-
             df = df_list[0]  # the dictionary is on a singleton list
             df = df.fillna('')  # nan fields are substituted by empty string
 
@@ -223,9 +150,87 @@ class PdfPage:
             # export_dict_ragged_to_csv(df.to_dict(), self.midfilename)
             # convert dataframe to list of rows including header
 
-            row_list += [list(df.columns), *df.values.tolist()]
+            dict_list.append(df)
+        return dict_list
 
-            # for testing:
-            print([list(df.columns), *df.values.tolist()])
+    def convert_dataframe_tolist_of_lines(self, df):
+        """ :param df dataframe corresponding to one selection
+        :returns lines_list that represents selection"""
+        lines_list = [list(df.columns), *df.values.tolist()]  # list of lines representing current selection
+        return lines_list
 
-        return row_list
+    def convert_list_of_dataframes_tolist_of_lines(self, df_list):
+        """ :param df_list - list of dataframes
+            :return list of lists corresponding to list of lines
+        """
+        ls = []
+        for df in df_list:
+            ls += self.convert_dataframe_tolist_of_lines(df)
+        return ls
+
+    def convert_list_of_dataframes_tolist_of_dict(self, df_list):
+        """ :param df_list - list of dataframes
+            :return list of dict corresponding to list of lines
+        """
+        ls = []
+        for df in df_list:
+            ls.append(df.to_dict())
+        return ls
+
+    def convert_list_of_dataframes_to_selection_lines(self, df_list):
+        """ :param df_list - list of dataframes
+        :return list of lists representing selections on the current page"""
+        selectios_ = []
+        for my_df in df_list:
+            selection_lines = self.convert_list_of_dataframes_tolist_of_lines([my_df])
+            print(selection_lines)
+            selectios_.append(selection_lines)
+        # print("selections as lines:")
+        # print(selectios_)
+        return selectios_
+
+    def set_stock_areas(self):
+        """ :return a list of stock areas of current page """
+        stock_areas = []
+        for selection in self.selections_as_line_lists:
+            contains = False
+            for line in selection:
+                if 'Unit' in line and 'Net Price' in line:
+                    stock_areas.append(selection)
+                    break
+        return stock_areas
+
+    def set_color_areas(self):
+        """ :return a list of color areas of current page """
+        color_areas = []
+        for selection in self.selections_as_line_lists:
+            is_header = False
+            for line in selection:
+                if 'Code' in line:
+                    if 'Name' in line:
+                        is_header = True
+                    else:
+                        for item in line:
+                            if "Color" in str(item):
+                                is_header = True
+            if is_header:
+                color_areas.append(selection)
+        return color_areas
+
+    def set_packaging_areas(self):
+        """ :return a list of color areas of current page"""
+        packaging_areas = []
+        for selection in self.selections_as_line_lists:
+            contains = False
+            for line in selection:
+                flag = False
+                for item in line:
+                    if "Packaging Information" in item:
+                        flag = True
+                        break
+                if flag:
+                    contains = True
+                    break
+            if contains:
+                packaging_areas.append(selection)
+        return packaging_areas

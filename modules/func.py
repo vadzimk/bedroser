@@ -170,6 +170,27 @@ def export_dict_ragged_to_csv(d, filename):
         writer.writerows(rows)
 
 
+def print_dict(d):
+    print(list(d.keys()))
+    max_len = 0  # max len of list in a key
+    for v in d.values():
+        if len(v) > max_len:
+            max_len = len(v)
+
+    for i in range(max_len):
+        row = []
+        for key in d.keys():
+            if i < len(d[key]):
+                item = d[key][i]
+            else:
+                item = ''
+            row.append(item)
+        print(row)
+
+
+
+
+
 def read_json_data(json_file_name):
     """ :returns list of dictionaries correspoinding to json objects """
     with open(json_file_name, 'r') as json_file:
@@ -190,9 +211,9 @@ def extract_page_data_from_json_data(json_data, pagenumber):
 def write_line_list_to_csv(aList, filename):
     """ writes lsit of lines into csv filename"""
     # for testing
-    print("write_line_list_to_csv:")
-    for row in aList:
-        print(row)
+    # print("write_line_list_to_csv:")
+    # for row in aList:
+    #     print(row)
 
     with open(filename, "w", newline='', encoding='utf-8') as f:
         wr = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
