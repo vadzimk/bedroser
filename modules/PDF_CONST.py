@@ -25,6 +25,13 @@ PRODUCT_TABLE_FIELDS = [
 ]
 
 
+TYPE_TITLE = 'TITLE_AREA'
+TYPE_COLOR = 'COLOR_AREA'
+TYPE_STOCK = 'STOCK_AREA'
+TYPE_PACKAGING = 'PACKAGING_AREA'
+
+
+
 COLUMN_X_COORDINATES = [120.024,219.621,339.538, 465.504, 505.089, 532.494, 573.602]  # x coordinates of columns for tabula.read_pdf
 
 TABLE_COORDINATES = (31.591, 17.128, 740.303, 591.110) #Portion of the page to analyze(top,left,bottom,right) $y1,$x1,$y2,$x2

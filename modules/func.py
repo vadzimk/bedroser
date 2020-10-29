@@ -218,3 +218,10 @@ def write_line_list_to_csv(aList, filename):
     with open(filename, "w", newline='', encoding='utf-8') as f:
         wr = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
         wr.writerows(aList)
+
+
+def convert_dataframe_tolist_of_lines(df):
+    """ :param df dataframe corresponding to one selection
+    :returns lines_list that represents selection"""
+    lines_list = [list(df.columns), *df.values.tolist()]  # list of lines representing current selection
+    return lines_list

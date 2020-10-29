@@ -3,20 +3,24 @@ import pandas
 import modules.PDF_CONST as PFC
 from modules import PROJ_CONST as PR
 from modules.PdfLine import PdfLine
+from modules.Selection import Selection
 import csv
+from pprint import pprint
 
 
 class PageProductTable:
     """ contains products in a dictionary """
 
-    def __init__(self, lines, guessed_rows, page_number, colors, areas):
-        self._areas = areas
+    def __init__(self, page_number, selection_dfs):
+        self._selection_dfs = selection_dfs
+        self.selection_objects = [Selection(df) for df in selection_dfs]
         self._pagenumber = page_number
-        self.lines = lines
+        # self.lines = lines
         # print("guessed_rows")
         # for row in guessed_rows:
         #     print(row)
-        self.guessed_rows_strings = [self.join_list_items(item) for item in guessed_rows]  # joins guessed rows and retrurns a list of strings
+        # self.guessed_rows_strings = [self.join_list_items(item) for item in
+        #                              guessed_rows]  # joins guessed rows and retrurns a list of strings
         # print("guessed_strings:")
         # for string in self.guessed_rows_strings:
         #     print(string)
@@ -24,7 +28,7 @@ class PageProductTable:
         # # for line in lines:
         # #     print(line._tabula_line)
         # print("__ end")
-        self.colors = colors
+        # self.colors = colors
 
         self.__products = {key: [] for key in
                            PFC.PRODUCT_TABLE_FIELDS}  # dictionary that will hold the items of the table
@@ -39,6 +43,9 @@ class PageProductTable:
         self._units_of_measure = None
         self._unit_price = None
 
+        # supplimental properties
+        self.color_dicts = []
+
         self.build_table()  # put products in the dictionary
 
         # TODO keep this
@@ -51,9 +58,39 @@ class PageProductTable:
 
     def build_table(self):
         print("build_table:")
-        a = self._areas['title_areas']
-        print(a)
-        title_area_pdflines =  [PdfLine(line) for line in self._areas['title_areas']]
+
+        # initialize selection's type:
+        self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
+        # set remaining areas
+        for i in range(1, len(self.selection_objects)):
+            self.selection_objects[i].set_type()
+
+        for area in self.selection_objects:
+            print(area.type)
+            if area.type == PFC.TYPE_TITLE:
+                for line in area.pdf_line_list:
+                    self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
+            # TODO ============== working on this part ==============
+            if area.type == PFC.TYPE_COLOR:
+                header = area.selection_as_line_list[0]
+                if len(header) == 1 and 'Colors' in header[0]:
+                    """ color table with condition"""
+                    key = header[0].replace('Colors', '')
+                    key = "".join(key.split())
+                    value = area.selection_as_line_list[2:]
+                    color_dict = {key: value}
+                    self.color_dicts.append(color_dict)
+                    print('color table with condition')
+                elif header == ['Name', 'Code']:
+                    key = 'FOR_ALL'
+                    value = area.selection_as_line_list[1:]
+                    color_dict = {key: value}
+                    self.color_dicts.append(color_dict)
+
+                pprint(self.color_dicts)
+
+                # for item in area.selection_as_dict.keys():
+                #     if
 
         # todo p 42 contains many color areas and packaging info on the next page!
         # todo: move the
@@ -65,53 +102,49 @@ class PageProductTable:
         #  todo ; for each area in the page
         #  todo ; pass current_area to create a list of PdfLines and extract relevant properties
 
-
-
-
-
-
         """ sees what fields are detected by the PdfLine and builds product table"""
-        for line in self.lines:  # line comes form fixed column recognition
-
-            """TODO skip lines that are not valid, check if line is guessed list if so than it is valid, """
-            cur_line_string = self.join_list_items(line._tabula_line)
-            valid_line = False
-            # for item in self.guessed_rows_strings:
-            #     if item in cur_line_string:
-            #         valid_line = True
-            if cur_line_string in self.guessed_rows_strings or ('Units' in  cur_line_string and 'Price' in cur_line_string):
-                valid_line = True
-
-            if valid_line: # line matches the auto guessed row
-                """collect the fields"""
-                self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
-                self._group = line.find_group() if line.find_group() else self._group
-                self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
-                self._vendor_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
-                self._item_size = line.find_item_size() if line.find_item_size() else self._item_size
-                self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
-                self._units_per_carton = line.find_units_per_carton() if line.find_units_per_carton() else self._units_per_carton
-                self._units_of_measure = line.find_units_of_measure() if line.find_units_of_measure() else self._units_of_measure
-                self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price
-
-                multiplier = 1  # number of times the row must be multiplied
-                if self.colors:  # if color list is present, a product row will be appended the number of colors times
-                    multiplier = len(self.colors)
-
-                if line._is_product_table_row and self._series_name:
-                    # print("is_product_table_row: ", line._is_product_table_row)
-                    # print("_series_name", self._series_name)
-
-                    """push properties to the dictionary"""
-                    for i in range(multiplier):
-                        for key in PFC.PRODUCT_TABLE_FIELDS:
-                            if self.colors and key == "_item_color":
-                                value = self.colors[i]
-                            else:
-                                value = eval("self.%s" % (key))  # line at key
-                            self.__products[key].append(value)
-
-            # print(valid_line, cur_line_string)
+        # for line in self.lines:  # line comes form fixed column recognition
+        #
+        #     """TODO skip lines that are not valid, check if line is guessed list if so than it is valid, """
+        #     cur_line_string = self.join_list_items(line._tabula_line)
+        #     valid_line = False
+        #     # for item in self.guessed_rows_strings:
+        #     #     if item in cur_line_string:
+        #     #         valid_line = True
+        #     if cur_line_string in self.guessed_rows_strings or (
+        #             'Units' in cur_line_string and 'Price' in cur_line_string):
+        #         valid_line = True
+        #
+        #     if valid_line:  # line matches the auto guessed row
+        #         """collect the fields"""
+        #         self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
+        #         self._group = line.find_group() if line.find_group() else self._group
+        #         self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
+        #         self._vendor_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
+        #         self._item_size = line.find_item_size() if line.find_item_size() else self._item_size
+        #         self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
+        #         self._units_per_carton = line.find_units_per_carton() if line.find_units_per_carton() else self._units_per_carton
+        #         self._units_of_measure = line.find_units_of_measure() if line.find_units_of_measure() else self._units_of_measure
+        #         self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price
+        #
+        #         multiplier = 1  # number of times the row must be multiplied
+        #         if self.colors:  # if color list is present, a product row will be appended the number of colors times
+        #             multiplier = len(self.colors)
+        #
+        #         if line._is_product_table_row and self._series_name:
+        #             # print("is_product_table_row: ", line._is_product_table_row)
+        #             # print("_series_name", self._series_name)
+        #
+        #             """push properties to the dictionary"""
+        #             for i in range(multiplier):
+        #                 for key in PFC.PRODUCT_TABLE_FIELDS:
+        #                     if self.colors and key == "_item_color":
+        #                         value = self.colors[i]
+        #                     else:
+        #                         value = eval("self.%s" % (key))  # line at key
+        #                     self.__products[key].append(value)
+        #
+        #     # print(valid_line, cur_line_string)
 
     def get_products(self):
         """@:returns the dictionary of products representing product table of the page"""

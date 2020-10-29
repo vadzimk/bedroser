@@ -21,6 +21,7 @@ class PdfPage:
         self.midfilename = '{}tabulated_{}.csv'.format(PR.DIR_TABULATED_CSV, self.pagenumber)
         # read all rows of the current page in a list of lists
 
+        # passed to the PageProductTable
         self.selection_dataframes = self.read_with_json_tabula(self.infilename, self.pagenumber, self.coordinates)
 
         # # would work if tables were recognized with proper header but there are plenty of small tables each with its own tiltle
@@ -41,34 +42,17 @@ class PdfPage:
         #         print(line)
         #     print("")
 
-        #  represent selections as lists of lines
-        self.selections_as_line_lists = self.convert_list_of_dataframes_to_selection_lines(self.selection_dataframes)
+        # #  represent selections as lists of lines
+        # self.selections_as_line_lists = self.convert_list_of_dataframes_to_selection_lines(self.selection_dataframes)
 
-        self.title_areas = [self.selections_as_line_lists[0]]
-        self.stock_areas = self.set_stock_areas()
-        self.color_areas = self.set_color_areas()
-        self.packaging_areas = self.set_packaging_areas()
 
-        print("\ntitle_areas:")
-        print(len(self.title_areas), self.title_areas)
-        print("\ncolor_areas:")
-        print(len(self.color_areas), self.color_areas)
-        print("\nstock_areas:")
-        print(len(self.stock_areas), self.stock_areas)
-        print("\npackaging_areas:")
-        print(len(self.packaging_areas), self.packaging_areas)
 
-        # dictionary that will be passed to the PageProductTable to create a product table for current page
-        self.areas = {'title_areas': self.title_areas,
-                      'color_areas': self.color_areas,
-                      'stock_areas': self.stock_areas,
-                      'packaging_areas': self.packaging_areas}
-
-        self._contains_color_table = self.contains_color_table()
+        # self._contains_color_table = self.contains_color_table()
 
         # constructs list of PdfLine objects
         # for each template row make an object that contains methods that can fetch attributes
-        self._pdf_line_list = [PdfLine(line) for line in self.list_of_page_tabula_rows]
+
+        # self._pdf_line_list = [PdfLine(line) for line in self.list_of_page_tabula_rows]
 
         # self._page_contains_color_info = self.page_contains_color_info()
 
@@ -85,20 +69,20 @@ class PdfPage:
         # export tabulated csv for current pagenumber
         write_line_list_to_csv(self.list_of_page_tabula_rows, self.midfilename)
 
-    def contains_color_table_header(self):
-        """ :returns true if guessed rows contain "- COLORS" which is usually in color table header"""
-        contains = False
-        for row in self.list_of_page_tabula_rows:
-            row = [str(item) for item in row]
-            row_string = "".join(row)
-            if "Colors" in row_string:
-                contains = True
-        return contains
+    # def contains_color_table_header(self):
+    #     """ :returns true if guessed rows contain "- COLORS" which is usually in color table header"""
+    #     contains = False
+    #     for row in self.list_of_page_tabula_rows:
+    #         row = [str(item) for item in row]
+    #         row_string = "".join(row)
+    #         if "Colors" in row_string:
+    #             contains = True
+    #     return contains
 
-    def contains_color_table(self):
-        """ :returns true if current page contains separate color table on the bottom of the page """
-        contains = self.contains_color_table_header()
-        return contains
+    # def contains_color_table(self):
+    #     """ :returns true if current page contains separate color table on the bottom of the page """
+    #     contains = self.contains_color_table_header()
+    #     return contains
 
     def create_product_table(self, external_color_list=None):
         # print(self.pagenumber, "PdfPage._page_contains_color_info", self._page_contains_color_info)
@@ -109,8 +93,10 @@ class PdfPage:
         # ####### print(self.pagenumber, "contains_color_note", self.contains_color_note())
 
         # if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
-        self._product_table = PageProductTable(self._pdf_line_list, self.list_of_page_tabula_rows, self.pagenumber,
-                                               self._color_list, areas=self.areas)
+
+        # was passed selected_areas=self.selections_as_line_lists
+        self._product_table = PageProductTable(page_number=self.pagenumber,
+                                               selection_dfs=self.selection_dataframes)
         # else:  # page doesn't contin color info in itself
         #     self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
         #                                            external_color_list)
@@ -118,7 +104,6 @@ class PdfPage:
     def read_with_json_tabula(self, infilename, pagenumber, json_page_data):
         """
         :return list of dataframes representing all selections on the current page
-        # :returns list of rows(each row is a list of strings) of the current pdf page using tabula with area from json file
         :param json_page_data is a list of dictionaries containing keys: page, extraction_method, x1, x2, y1, y2, width, height
          which is relevant to the current page only"""
         selection_coordinates = [(data["y1"], data["x1"], data["y2"], data["x2"]) for data in
@@ -179,48 +164,4 @@ class PdfPage:
         # print(selectios_)
         return selectios_
 
-    def set_stock_areas(self):
-        """ :return a list of stock areas of current page """
-        stock_areas = []
-        for selection in self.selections_as_line_lists:
-            contains = False
-            for line in selection:
-                if 'Unit' in line and 'Net Price' in line:
-                    stock_areas.append(selection)
-                    break
-        return stock_areas
 
-    def set_color_areas(self):
-        """ :return a list of color areas of current page """
-        color_areas = []
-        for selection in self.selections_as_line_lists:
-            is_header = False
-            for line in selection:
-                if 'Code' in line:
-                    if 'Name' in line:
-                        is_header = True
-                    else:
-                        for item in line:
-                            if "Color" in str(item):
-                                is_header = True
-            if is_header:
-                color_areas.append(selection)
-        return color_areas
-
-    def set_packaging_areas(self):
-        """ :return a list of color areas of current page"""
-        packaging_areas = []
-        for selection in self.selections_as_line_lists:
-            contains = False
-            for line in selection:
-                flag = False
-                for item in line:
-                    if "Packaging Information" in str(item):
-                        flag = True
-                        break
-                if flag:
-                    contains = True
-                    break
-            if contains:
-                packaging_areas.append(selection)
-        return packaging_areas
