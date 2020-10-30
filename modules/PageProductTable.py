@@ -44,7 +44,7 @@ class PageProductTable:
         self._unit_price = None
 
         # supplimental properties
-        self.color_dicts = []
+        self.color_areas = []  # contains Color_area objects
 
         self.build_table()  # put products in the dictionary
 
@@ -66,28 +66,27 @@ class PageProductTable:
             self.selection_objects[i].set_type()
 
         for area in self.selection_objects:
-            print(area.type)
+            print(area)
+
             if area.type == PFC.TYPE_TITLE:
                 for line in area.pdf_line_list:
                     self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
-            # TODO ============== working on this part ==============
             if area.type == PFC.TYPE_COLOR:
-                header = area.selection_as_line_list[0]
-                if len(header) == 1 and 'Colors' in header[0]:
-                    """ color table with condition"""
-                    key = header[0].replace('Colors', '')
-                    key = "".join(key.split())
-                    value = area.selection_as_line_list[2:]
-                    color_dict = {key: value}
-                    self.color_dicts.append(color_dict)
-                    print('color table with condition')
-                elif header == ['Name', 'Code']:
-                    key = 'FOR_ALL'
-                    value = area.selection_as_line_list[1:]
-                    color_dict = {key: value}
-                    self.color_dicts.append(color_dict)
+                self.color_areas.append(area.color_area())
+            # TODO ============== working on this part ==============
+            if area.type == PFC.TYPE_STOCK:
+                for line in area.pdf_line_list:
+                    self._group = line.find_group() if line.find_group() else self._group
+                    self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
+                    # todo --- find all attributes for the line
+                    # todo --- iterate over packaging information and attach packaging data
+                    # todo --- iterate over color dictionary and push this line necessary number of times to the cumulative dict
 
-                pprint(self.color_dicts)
+
+        print("Attributes:")
+        print(self._series_name)
+        print(self._group)
+        print(self._subgroup)
 
                 # for item in area.selection_as_dict.keys():
                 #     if
@@ -105,7 +104,7 @@ class PageProductTable:
         """ sees what fields are detected by the PdfLine and builds product table"""
         # for line in self.lines:  # line comes form fixed column recognition
         #
-        #     """TODO skip lines that are not valid, check if line is guessed list if so than it is valid, """
+        #     """not TODO skip lines that are not valid, check if line is guessed list if so than it is valid, """
         #     cur_line_string = self.join_list_items(line._tabula_line)
         #     valid_line = False
         #     # for item in self.guessed_rows_strings:
@@ -130,7 +129,7 @@ class PageProductTable:
         #         multiplier = 1  # number of times the row must be multiplied
         #         if self.colors:  # if color list is present, a product row will be appended the number of colors times
         #             multiplier = len(self.colors)
-        #
+
         #         if line._is_product_table_row and self._series_name:
         #             # print("is_product_table_row: ", line._is_product_table_row)
         #             # print("_series_name", self._series_name)

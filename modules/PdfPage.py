@@ -116,7 +116,7 @@ class PdfPage:
             df_list = tabula.read_pdf(
                 input_path=infilename, output_format="dataframe", pages=pagenumber,
                 stream=True, multiple_tables=True, guess=True,
-                area=tuple
+                area=tuple,
             )
             df = df_list[0]  # the dictionary is on a singleton list
             df = df.fillna('')  # nan fields are substituted by empty string

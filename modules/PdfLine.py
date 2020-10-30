@@ -60,9 +60,9 @@ class PdfLine:
 
     def find_group(self):
         group_name = None
-        # cells = self._tabula_line[:-3]
-        # if self.contains_group():
-        #     group_name = "".join(cells)
+        index = 0
+        if self._tabula_line[-1] and not 'Net Price' in str(self._tabula_line[-1]):
+            group_name = self._tabula_line[index]
         return group_name
 
     # def contains_subgroup(self):
@@ -73,9 +73,9 @@ class PdfLine:
 
     def find_subgroup(self):
         subgroup_name = None
-        # if self.contains_subgroup():
-        #     index = 2
-        #     subgroup_name = self._tabula_line[index]
+        index = 3
+        if self._tabula_line[-1] and not 'Net Price' in str(self._tabula_line[-1]):
+            subgroup_name = self._tabula_line[index]
         return subgroup_name
 
     # def contains_item_size(self):
