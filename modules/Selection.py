@@ -61,29 +61,41 @@ class Selection:
                 break
         return is_packaging_area
 
-    def build_color_dict(self):
+    def extract_color_data(self):
         """ :returns a dictionary containing colors of color_area"""
         color_dict = None
+        condition = None
         header = self.selection_as_line_list[0]
-        if len(header) == 1 and 'Colors' in header[0]:
-            """ color table with condition"""
-            key = header[0].replace('Colors', '')
-            key = "".join(key.split())
-            value = self.selection_as_line_list[2:]
-            color_dict = {key: value}
+        if len(header) == 1:
+            # color table with condition
+            condition = header[0].replace('Colors', '')
+            condition = "".join(condition.split())
+            value_lines = self.selection_as_line_list[2:]
+            names = [" ".join(item[0].split()[:-1]) for item in value_lines]
+            codes = [item[0].split()[-1] for item in value_lines]
+            color_dict = {"Name": names, "Code": codes}
             print('color table with condition')
+        elif len(header) == 2:
+            # color table with condition
+            condition = header[0].replace('Colors', '')
+            condition = "".join(condition.split())
+            value_lines = self.selection_as_line_list[1:]
+            names = [item[0] for item in value_lines]
+            codes = [item[-1] for item in value_lines]
+            color_dict = {"Name": names, "Code": codes}
         elif 'Code' in header:
             key = 'FOR_ALL'
             value = self.selection_as_line_list[1:]
             color_dict = {key: value}
-        print("color_dict")
+
         pprint(color_dict)
 
-        return color_dict
+        return (color_dict, condition)
 
     def color_area(self):
-        d = self.build_color_dict()
-        return ColorArea(d)
+        """ Initializes the dictionary on ColorArea object and sets its used property to false"""
+        d = self.extract_color_data()
+        return ColorArea(*d)
 
     def __str__(self):
         the_str = f"[Type: {self.type}]\n"

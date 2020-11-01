@@ -1,3 +1,5 @@
+import functools
+
 import pandas
 
 import modules.PDF_CONST as PFC
@@ -14,6 +16,7 @@ class PageProductTable:
     def __init__(self, page_number, selection_dfs):
         self._selection_dfs = selection_dfs
         self.selection_objects = [Selection(df) for df in selection_dfs]
+        self.set_selection_types()  # init selection types
         self._pagenumber = page_number
         # self.lines = lines
         # print("guessed_rows")
@@ -28,7 +31,7 @@ class PageProductTable:
         # # for line in lines:
         # #     print(line._tabula_line)
         # print("__ end")
-        # self.colors = colors
+        self.colors = None  # for testing
 
         self.__products = {key: [] for key in
                            PFC.PRODUCT_TABLE_FIELDS}  # dictionary that will hold the items of the table
@@ -39,12 +42,16 @@ class PageProductTable:
         self._vendor_code = None
         self._item_size = None
         self._item_color = None
-        self._units_per_carton = None
+        self._units_per_carton = None  # after testing change default value to 1
         self._units_of_measure = None
         self._unit_price = None
 
-        # supplimental properties
-        self.color_areas = []  # contains Color_area objects
+        # supplemental properties
+        self.color_areas = []  # contains Color_area objects that are pushed as the build_table is running
+        self.packaging_selections = self.collect_packaging_selections()  # a list of Packaging_selection objects of current page that is fixed by the time  build_table is called
+        self.subcategory = ''  # represents category prefix of subgroup
+
+        # print("num pack sel", len(self.packaging_selections))
 
         self.build_table()  # put products in the dictionary
 
@@ -59,37 +66,60 @@ class PageProductTable:
     def build_table(self):
         print("build_table:")
 
-        # initialize selection's type:
-        self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
-        # set remaining areas
-        for i in range(1, len(self.selection_objects)):
-            self.selection_objects[i].set_type()
-
         for area in self.selection_objects:
             print(area)
 
             if area.type == PFC.TYPE_TITLE:
                 for line in area.pdf_line_list:
                     self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
-            if area.type == PFC.TYPE_COLOR:
+            elif area.type == PFC.TYPE_COLOR:
                 self.color_areas.append(area.color_area())
             # TODO ============== working on this part ==============
-            if area.type == PFC.TYPE_STOCK:
+            elif area.type == PFC.TYPE_STOCK:
                 for line in area.pdf_line_list:
-                    self._group = line.find_group() if line.find_group() else self._group
-                    self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
-                    # todo --- find all attributes for the line
-                    # todo --- iterate over packaging information and attach packaging data
-                    # todo --- iterate over color dictionary and push this line necessary number of times to the cumulative dict
+                    if line.is_subcategory_row():
+                        self.subcategory = line.find_subcat()
+                    if line._is_product_table_row:
+                        self._group = line.find_group() if line.find_group() else self._group
+                        self._subgroup = self.subcategory + ' '+ line.find_subgroup() if line.find_subgroup() else self._subgroup
+                        self._item_size = line.find_item_size() if line.find_item_size() else self._item_size
+                        self._units_of_measure = line.find_units_of_measure() if line.find_units_of_measure() else self._units_of_measure
+                        self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price
 
+                        # extract packaging data for the item in STOCK area
+
+                        for selection in self.packaging_selections:
+                            for packaging_line in selection.pdf_line_list:
+                                u_p_c = packaging_line.find_units_per_carton(self._subgroup, self._item_size)
+                                self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
+
+                        item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
+                        chr = u'\u25CF'
+                        if not chr in item_code:
+                            self._vendor_code = item_code
+                            self.push_attributes()
+
+                        # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
+                        #
+                        # multiplier = functools.reduce(lambda a, b: a.length + b.length, self.color_areas)
+                        # multiplier = multiplier if multiplier > 0 else 1
+                        # print("multiplier", multiplier)
+
+                        # todo --- find all attributes for the line
+                        # todo --- iterate over packaging information and attach packaging data
+                        # todo --- iterate over color dictionary and push this line necessary number of times to the cumulative dict
 
         print("Attributes:")
         print(self._series_name)
         print(self._group)
         print(self._subgroup)
+        print(self._item_size)
+        print(self._units_of_measure)
+        print(self._unit_price)
+        print(self._units_per_carton)
 
-                # for item in area.selection_as_dict.keys():
-                #     if
+        # for item in area.selection_as_dict.keys():
+        #     if
 
         # todo p 42 contains many color areas and packaging info on the next page!
         # todo: move the
@@ -163,3 +193,28 @@ class PageProductTable:
         line_string = "".join(line_string_list)  # join all items in one string (with no spaces between items)
         line_string = "".join(line_string.split())
         return line_string
+
+    def set_selection_types(self):
+        # initialize selection's type:
+        self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
+        # set remaining areas
+        for i in range(1, len(self.selection_objects)):
+            self.selection_objects[i].set_type()
+
+    def collect_packaging_selections(self):
+        """ :return a list of packaging selections of the current page"""
+        packaging_selections = []
+        for selection in self.selection_objects:
+            if selection.type == PFC.TYPE_PACKAGING:
+                packaging_selections.append(selection)
+        return packaging_selections
+
+    def push_attributes(self, multiplier=1):
+        """push properties to the dictionary"""
+        for i in range(multiplier):
+            for key in PFC.PRODUCT_TABLE_FIELDS:
+                if self.colors and key == "_item_color":
+                    value = self.colors[i]
+                else:
+                    value = eval("self.%s" % (key))  # line at key
+                self.__products[key].append(value)

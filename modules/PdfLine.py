@@ -20,9 +20,9 @@ class PdfLine:
         # self._all_cells_filled = self.all_cells_filled()  # applies to a table row only
         # self._is_color_table_header = self.is_color_table_header()
         # self._is_color_table_row = self.is_color_table_row()
-        # self._is_product_table_row = self.is_product_table_row()
+        self._is_product_table_row = self.is_product_table_row()
 
-        print(self._line_len, self._tabula_line)
+        print(self._line_len, self._num_blanks, self._tabula_line)
 
         # print(len(self._row), self._row)
 
@@ -33,14 +33,13 @@ class PdfLine:
     def find_series_name(self):
         """ :returns series name or None if not found """
         name = None
-        if len(self._tabula_line)==1:
+        if len(self._tabula_line) == 1:
             for item in self._tabula_line:
                 if 'CATEGORY' in str(item):
                     the_list = item.split('-')
                     name = the_list[-1]
                     name = " ".join(name.split())  # remove multiple spaces
         return name
-
 
     def count_blanks(self):
         """ counts number of blanks in a given row"""
@@ -59,10 +58,13 @@ class PdfLine:
     #     return contains
 
     def find_group(self):
+        assert self._line_len >= 5 and self._line_len <= 6
         group_name = None
         index = 0
-        if self._tabula_line[-1] and not 'Net Price' in str(self._tabula_line[-1]):
+        if self._is_product_table_row:
             group_name = self._tabula_line[index]
+            if len(self._tabula_line) == 5:
+                group_name = group_name.split()[0]
         return group_name
 
     # def contains_subgroup(self):
@@ -73,10 +75,24 @@ class PdfLine:
 
     def find_subgroup(self):
         subgroup_name = None
-        index = 3
-        if self._tabula_line[-1] and not 'Net Price' in str(self._tabula_line[-1]):
-            subgroup_name = self._tabula_line[index]
+        index = -3
+        if self._is_product_table_row:
+            if self._line_len == 6:
+                subgroup_name = self._tabula_line[index]
+            elif self._line_len == 5 and self._num_blanks == 1:
+                    index = -4
+                    subgroup_name = self._tabula_line[index]
+                    subgroup_name = " ".join(subgroup_name.split()[1:])
         return subgroup_name
+
+    def find_subcat(self):
+        """ :return subcategory or empty string """
+        subcat = ''
+        index = 0
+        if self.is_subcategory_row():
+            subcat = self._tabula_line[0]
+        return subcat
+
 
     # def contains_item_size(self):
     #     return self._is_product_table_row
@@ -84,9 +100,11 @@ class PdfLine:
 
     def find_item_size(self):
         item_size = None
-        # if self.contains_item_size():
-        #     index = 0
-        #     item_size = self._tabula_line[index]
+        index = -4
+        if self._is_product_table_row:
+            item_size = self._tabula_line[index]
+            if self._line_len == 5 and self._num_blanks==1:
+                item_size = item_size.split()[0]
         return item_size
 
     # def contains_vendor_code(self):
@@ -96,12 +114,13 @@ class PdfLine:
     #     return 1
 
     def find_vendor_code(self):
+        assert self._line_len >= 5 and self._line_len <= 6
         code = None
-        # if self.contains_vendor_code():
-        #     index = 1
-        #     code = str(self._tabula_line[index])
-        #     if '*' in code:
-        #         code = code.split(' ')[0]
+        index = -5
+        if self._is_product_table_row:
+            code = self._tabula_line[index]
+            if len(self._tabula_line) == 5:
+                code = code.split()[-1]
         return code
 
     # def contains_color(self):
@@ -127,33 +146,48 @@ class PdfLine:
     # def contains_units_per_carton(self):
     #     pass
 
-    def find_units_per_carton(self):
+    def find_units_per_carton(self, description, size):
+        description_set = set(str(description).split())
+        size_set = set(str(size).split())
+
         upc = None
-        # if self._is_product_table_row:
-        #     upc = self._tabula_line[-3]
+        index = 1
+        if "Pcs/Ctn" not in self._tabula_line:
+            packaging_info_set = set(str(self._tabula_line[0]).split())
+            print("packaging_info_set", packaging_info_set, packaging_info_set.intersection(description_set))
+            if len(packaging_info_set.intersection(description_set)) > 0:
+                upc = self._tabula_line[index]
+            elif len(packaging_info_set.intersection(size_set)) > 0:
+                upc = self._tabula_line[index]
         return upc
 
     def find_units_of_measure(self):
         uom = None
-        # if self._is_product_table_row:
-        #     uom = self._tabula_line[-2]
+        index = -2
+        if self._is_product_table_row:
+            uom = self._tabula_line[-2]
         return uom
 
     def find_unit_price(self):
         up = None
-        # if self._is_product_table_row:
-        #     up = self._tabula_line[-1]
+        index = -1
+        if self._is_product_table_row:
+            up = self._tabula_line[index]
         return up
 
-    # def is_product_table_row(self):
-    #     """returns true if the row from midfile to be output in the outfile"""
-    #     row_set = set(self._tabula_line)
-    #     is_valid = False
-    #     if len(self._tabula_line)>6 and not self.contains_series() and not self.contains_group() and not self._is_color_table_row and not self._is_color_table_header and PFC.DETECT_SERIES_SET.isdisjoint(
-    #             row_set) and PFC.EMPTY_LINE_FLAGS.isdisjoint(
-    #         row_set):
-    #         is_valid = True
-    #     return is_valid
+    def is_product_table_row(self):
+        """returns true if the row contains price information  - the longest row of the stock selection """
+        row_set = set(self._tabula_line)
+        is_valid = False
+        if self._line_len >= 5 and self._tabula_line[-1] and not 'Net Price' in str(self._tabula_line[-1]):
+            is_valid = True
+        return is_valid
+
+    def is_subcategory_row(self):
+        is_subcat = False
+        if self._line_len == 5 and self._num_blanks == 3:
+            is_subcat = True
+        return is_subcat
 
     # def is_color_table_header(self):
     #     is_header = False

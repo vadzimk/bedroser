@@ -115,7 +115,7 @@ class PdfPage:
         for tuple in selection_coordinates:
             df_list = tabula.read_pdf(
                 input_path=infilename, output_format="dataframe", pages=pagenumber,
-                stream=True, multiple_tables=True, guess=True,
+                stream=True, lattice=False, multiple_tables=True, guess=True,
                 area=tuple,
             )
             df = df_list[0]  # the dictionary is on a singleton list
