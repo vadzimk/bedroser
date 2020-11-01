@@ -49,7 +49,7 @@ class PageProductTable:
         # supplemental properties
         self.color_areas = []  # contains Color_area objects that are pushed as the build_table is running
         self.packaging_selections = self.collect_packaging_selections()  # a list of Packaging_selection objects of current page that is fixed by the time  build_table is called
-        self.subcategory = ''  # represents category prefix of subgroup
+        self.group_prefix = ''  # represents category prefix of subgroup
 
         # print("num pack sel", len(self.packaging_selections))
 
@@ -77,11 +77,12 @@ class PageProductTable:
             # TODO ============== working on this part ==============
             elif area.type == PFC.TYPE_STOCK:
                 for line in area.pdf_line_list:
-                    if line.is_subcategory_row():
-                        self.subcategory = line.find_subcat()
+                    if line.is_group_prefix_row():
+                        self.group_prefix = line.find_group_prefix()
+                        continue   # don not push attributes to the dictionary - continue to the next iteration
                     if line._is_product_table_row:
-                        self._group = line.find_group() if line.find_group() else self._group
-                        self._subgroup = self.subcategory + ' '+ line.find_subgroup() if line.find_subgroup() else self._subgroup
+                        self._group = self.group_prefix + ' ' + line.find_group() if line.find_group() else self._group
+                        self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
                         self._item_size = line.find_item_size() if line.find_item_size() else self._item_size
                         self._units_of_measure = line.find_units_of_measure() if line.find_units_of_measure() else self._units_of_measure
                         self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price

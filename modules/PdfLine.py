@@ -63,8 +63,10 @@ class PdfLine:
         index = 0
         if self._is_product_table_row:
             group_name = self._tabula_line[index]
-            if len(self._tabula_line) == 5:
-                group_name = group_name.split()[0]
+            if len(self._tabula_line) == 5 : # the prefix above the line became the column header
+                group_name = " ".join(group_name.split()[:-1]) if len(group_name.split())> 1 else None
+
+
         return group_name
 
     # def contains_subgroup(self):
@@ -77,19 +79,19 @@ class PdfLine:
         subgroup_name = None
         index = -3
         if self._is_product_table_row:
-            if self._line_len == 6:
+            if self._line_len == 6 or self._line_len == 5 and self._num_blanks ==0:
                 subgroup_name = self._tabula_line[index]
-            elif self._line_len == 5 and self._num_blanks == 1:
-                    index = -4
-                    subgroup_name = self._tabula_line[index]
-                    subgroup_name = " ".join(subgroup_name.split()[1:])
+            elif self._line_len == 5 and self._num_blanks == 1:  # the prefix above the line became the column header
+                index = -4
+                subgroup_name = self._tabula_line[index]
+                subgroup_name = " ".join(subgroup_name.split()[1:])
         return subgroup_name
 
-    def find_subcat(self):
+    def find_group_prefix(self):
         """ :return subcategory or empty string """
         subcat = ''
         index = 0
-        if self.is_subcategory_row():
+        if self.is_group_prefix_row():
             subcat = self._tabula_line[0]
         return subcat
 
@@ -183,11 +185,11 @@ class PdfLine:
             is_valid = True
         return is_valid
 
-    def is_subcategory_row(self):
-        is_subcat = False
-        if self._line_len == 5 and self._num_blanks == 3:
-            is_subcat = True
-        return is_subcat
+    def is_group_prefix_row(self):
+        is_gr_prefx = False
+        if self._line_len == 5 and self._num_blanks >= 3:
+            is_gr_prefx = True
+        return is_gr_prefx
 
     # def is_color_table_header(self):
     #     is_header = False
