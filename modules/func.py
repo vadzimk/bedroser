@@ -1,5 +1,6 @@
 import json
 import os
+from fractions import Fraction
 from pathlib import Path
 import shutil
 
@@ -225,3 +226,44 @@ def convert_dataframe_tolist_of_lines(df):
     :returns lines_list that represents selection"""
     lines_list = [list(df.columns), *df.values.tolist()]  # list of lines representing current selection
     return lines_list
+
+
+def fract2float(num):
+    """ converts fractional inch notation with '-' delimiting inch to decimal inch notation
+    :return float representation """
+
+    # Convert the inch to a real and frac part  Note it is assumed that the real and frac
+    # parts are delimited by '-'
+    result = 0
+
+    try:
+        real, x, frac = num.rpartition("-")
+        if real == '':
+            real = 0
+        result = int(real)
+        result += Fraction(frac)
+    except ValueError:
+        None
+    return float(result)
+
+
+def fract_dim_to_float_dim(dim):
+    """ converts fractional inch dimensions into decimal inch dimensions
+    :return string representation"""
+    left, x, right = dim.rpartition('x')
+    left = str(fract2float(left))
+    right = str(fract2float(right))
+    return left + 'x' + right
+
+def dim_equals(dim1, dim2):
+    """ :param dim1 dim2 is a float representation of dimension delimited by 'x'
+    :return true if dim1 equals dim2, false otherwise """
+    left1, x, right1 = dim1.rpartition('x')
+    left2, x, right2 = dim2.rpartition('x')
+    res  = False
+    try:
+        res =  float(left1)==float(left2) and float(right1)==float(right2)
+    except ValueError:
+        None
+
+    return res

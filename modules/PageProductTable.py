@@ -49,6 +49,13 @@ class PageProductTable:
         # supplemental properties
         self.color_areas = []  # contains Color_area objects that are pushed as the build_table is running
         self.packaging_selections = self.collect_packaging_selections()  # a list of Packaging_selection objects of current page that is fixed by the time  build_table is called
+
+        print("packaging_selections")
+        for sel in  self.packaging_selections:
+            print(sel)
+
+
+
         self.group_prefix = ''  # represents category prefix of subgroup
 
         # print("num pack sel", len(self.packaging_selections))
@@ -72,16 +79,24 @@ class PageProductTable:
             if area.type == PFC.TYPE_TITLE:
                 for line in area.pdf_line_list:
                     self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
+                if not self._series_name:
+                    self._series_name = area.pdf_line_list[0][0]
+
+            elif area.type == PFC.TYPE_CATEG and area.selection_as_line_list[0][0]:
+                self.group_prefix = area.selection_as_line_list[0][0] + ' '
+                print("group prefix", self.group_prefix)
+
             elif area.type == PFC.TYPE_COLOR:
                 self.color_areas.append(area.color_area())
-            # TODO ============== working on this part ==============
+
             elif area.type == PFC.TYPE_STOCK:
                 for line in area.pdf_line_list:
-                    if line.is_group_prefix_row():
-                        self.group_prefix = line.find_group_prefix()
-                        continue   # don not push attributes to the dictionary - continue to the next iteration
+                    # if line.is_group_prefix_row():
+                    #     self.group_prefix = line.find_group_prefix()
+                    #     continue   # don not push attributes to the dictionary - continue to the next iteration
                     if line._is_product_table_row:
-                        self._group = self.group_prefix + ' ' + line.find_group() if line.find_group() else self._group
+                        g_name = self.group_prefix + line.find_group() if line.find_group() else self.group_prefix.strip()
+                        self._group = g_name if g_name else self._group
                         self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
                         self._item_size = line.find_item_size() if line.find_item_size() else self._item_size
                         self._units_of_measure = line.find_units_of_measure() if line.find_units_of_measure() else self._units_of_measure
@@ -89,14 +104,23 @@ class PageProductTable:
 
                         # extract packaging data for the item in STOCK area
 
+                        upc_options = []
                         for selection in self.packaging_selections:
                             for packaging_line in selection.pdf_line_list:
-                                u_p_c = packaging_line.find_units_per_carton(self._subgroup, self._item_size)
-                                self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
+                                # upc and its lable
+                                label_upc = packaging_line.find_units_per_carton(self._subgroup, self._item_size)
+                                upc_options.append(label_upc)
+                        upc_options.sort(reverse=True, key=lambda item: item[0])
+                        print(line._tabula_line)
+                        print(upc_options)
+                        print()
+                        u_p_c = upc_options[0][1]
+
+                        self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
 
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
-                        chr = u'\u25CF'
-                        if not chr in item_code:
+                        chr = u'\u25CF'  # same as '\x25cf'
+                        if chr in item_code:   # TODO change to not in
                             self._vendor_code = item_code
                             self.push_attributes()
 

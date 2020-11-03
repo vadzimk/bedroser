@@ -18,6 +18,8 @@ class Selection:
     def set_type(self, the_type=None):
         if the_type:
             self.type = the_type
+        elif self.is_categ_area():
+            self.type = PFC.TYPE_CATEG
         elif self.is_color_area():
             self.type = PFC.TYPE_COLOR
         elif self.is_stock_area():
@@ -26,6 +28,18 @@ class Selection:
             self.type = PFC.TYPE_PACKAGING
         else:
             self.type = None
+
+
+    def is_categ_area(self):
+        is_categ = True
+        for line in self.selection_as_line_list:
+            if len(line)>1:
+                is_categ = False
+                break
+        return is_categ
+
+
+
 
     def is_color_area(self):
         """ :return true if this is a color area """
@@ -53,7 +67,7 @@ class Selection:
         for line in self.selection_as_line_list:
             flag = False
             for item in line:
-                if "Packaging Information" in str(item):
+                if "Packaging" in item:
                     flag = True
                     break
             if flag:

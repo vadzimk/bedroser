@@ -14,7 +14,7 @@ def main():
     args = sys.argv  # get the list of arguments
     infilename = None
     if len(args) == 2:
-        infilename = 'Bedros.pdf'
+        infilename   = 'Bedros.pdf'
         if not os.path.exists(infilename) or not os.path.isfile(infilename):
             print(f"Default input file not found")
             infilename = None
@@ -26,7 +26,7 @@ def main():
     infilename_n_pages = determine_n_pages(infilename)
     print(f"The number of pages in this file is: {infilename_n_pages}")
 
-    page_start = 5
+    page_start = 44
 
     # commented while testing
     # page_start = ask_for_starting_page(infilename_n_pages)

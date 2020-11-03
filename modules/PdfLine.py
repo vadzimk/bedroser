@@ -1,12 +1,13 @@
 import modules.PDF_CONST as PFC
-
+from modules.func import *
 
 class PdfLine:
     """A line of the Pdf input file"""
 
     @staticmethod
     def token_is_blank(csv_list_item):
-        return csv_list_item == '\"\"' or not csv_list_item or "Unnamed:" in str(csv_list_item)
+        return csv_list_item == '\"\"' or not csv_list_item or "Unnamed:" in str(
+            csv_list_item) or csv_list_item == '\xf8'
 
     def __init__(self, tabula_csv_reader_list_line):
         """ @:param page_data_set for better detection of tokens"""
@@ -39,6 +40,7 @@ class PdfLine:
                     the_list = item.split('-')
                     name = the_list[-1]
                     name = " ".join(name.split())  # remove multiple spaces
+
         return name
 
     def count_blanks(self):
@@ -58,14 +60,17 @@ class PdfLine:
     #     return contains
 
     def find_group(self):
-        assert self._line_len >= 5 and self._line_len <= 6
+
         group_name = None
         index = 0
         if self._is_product_table_row:
             group_name = self._tabula_line[index]
-            if len(self._tabula_line) == 5 : # the prefix above the line became the column header
-                group_name = " ".join(group_name.split()[:-1]) if len(group_name.split())> 1 else None
-
+            if self._line_len == 5:  # the prefix above the line became the column header
+                group_name = " ".join(group_name.split()[:-1]) if len(group_name.split()) > 1 else None
+            elif self._line_len == 7:
+                group_name = " ".join(self._tabula_line[:2]).replace('\xf8', '').strip()
+        if 'Stock' in group_name or 'NEW' in group_name or 'Only' in group_name or 'Discontinued' in group_name:
+            group_name = None
 
         return group_name
 
@@ -79,7 +84,7 @@ class PdfLine:
         subgroup_name = None
         index = -3
         if self._is_product_table_row:
-            if self._line_len == 6 or self._line_len == 5 and self._num_blanks ==0:
+            if self._line_len == 6 or self._line_len == 7 or (self._line_len == 5 and self._num_blanks == 0):
                 subgroup_name = self._tabula_line[index]
             elif self._line_len == 5 and self._num_blanks == 1:  # the prefix above the line became the column header
                 index = -4
@@ -95,7 +100,6 @@ class PdfLine:
             subcat = self._tabula_line[0]
         return subcat
 
-
     # def contains_item_size(self):
     #     return self._is_product_table_row
     #     # return self.all_cells_filled()
@@ -105,7 +109,7 @@ class PdfLine:
         index = -4
         if self._is_product_table_row:
             item_size = self._tabula_line[index]
-            if self._line_len == 5 and self._num_blanks==1:
+            if self._line_len == 5 and self._num_blanks == 1:
                 item_size = item_size.split()[0]
         return item_size
 
@@ -116,13 +120,18 @@ class PdfLine:
     #     return 1
 
     def find_vendor_code(self):
-        assert self._line_len >= 5 and self._line_len <= 6
+
         code = None
-        index = -5
+        if self._tabula_line[-5]:
+            index = -5
+        else:
+            index = -6
+
         if self._is_product_table_row:
             code = self._tabula_line[index]
             if len(self._tabula_line) == 5:
                 code = code.split()[-1]
+            code = code.replace('\xf8', '').strip()
         return code
 
     # def contains_color(self):
@@ -149,19 +158,43 @@ class PdfLine:
     #     pass
 
     def find_units_per_carton(self, description, size):
-        description_set = set(str(description).split())
-        size_set = set(str(size).split())
+
+        # print(description)
+        # print(size)
+        # print(self._tabula_line)
+
+        description_arr = description.split()
+        size_arr = size.split()
+
+        # if description == 'Deco Liner - Matte':
+        #     print("find_units_per_carton: ")
+        #     print("description:", description_arr)
+        #     print("size:", size_arr)
+        #     print(self._tabula_line)
 
         upc = None
+        label = 0
         index = 1
         if "Pcs/Ctn" not in self._tabula_line:
             packaging_info_set = set(str(self._tabula_line[0]).split())
-            print("packaging_info_set", packaging_info_set, packaging_info_set.intersection(description_set))
-            if len(packaging_info_set.intersection(description_set)) > 0:
+
+            for p_item in packaging_info_set:
+                for d_item in description_arr:
+                    if d_item == p_item:
+                        label += 1
+                    # print(d_item , p_item, d_item == p_item)
+
+                for s_item in size_arr:
+                    if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item):
+                        label += 1
+                    # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
+
+            if label > 0:
                 upc = self._tabula_line[index]
-            elif len(packaging_info_set.intersection(size_set)) > 0:
-                upc = self._tabula_line[index]
-        return upc
+        # print(label, upc)
+        return (label, upc)
+
+
 
     def find_units_of_measure(self):
         uom = None
