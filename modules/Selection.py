@@ -98,9 +98,11 @@ class Selection:
             codes = [item[-1] for item in value_lines]
             color_dict = {"Name": names, "Code": codes}
         elif 'Code' in header:
-            key = 'FOR_ALL'
-            value = self.selection_as_line_list[1:]
-            color_dict = {key: value}
+            value_lines = self.selection_as_line_list[1:]
+            names = [item[0] for item in value_lines]
+            color_descriptions = [item[1] for item in value_lines]
+            codes = [item[-1] for item in value_lines]
+            color_dict = {"Name": names, "Color": color_descriptions, "Code": codes}
 
         print("condition:", condition)
         pprint(color_dict)

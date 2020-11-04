@@ -129,9 +129,13 @@ class PageProductTable:
                             left = item_code.split(chr)[0]
                             right = item_code.split(chr)[-1]
 
-                            color_sublist = self.get_color_area_sublist(self._subgroup)
+                            color_sublist = self.get_color_areas_with_conditions_sublist(self._subgroup)
+                            if len(color_sublist):
+                                colors_codes = self.get_color_codes(color_sublist)
+                            else:
+                                color_sublist = self.get_color_areas_no_conditions_sublist()
+                                colors_codes = self.get_color_codes(color_sublist)
 
-                            colors_codes = self.get_color_codes(color_sublist)  # set color codes for the current Stock area
                             for ccode in colors_codes:
                                 # ● in item_code
                                 self._vendor_code = left + ccode + right
@@ -281,9 +285,18 @@ class PageProductTable:
                 conditions.append(area.condition)
         return conditions
 
-    def get_color_area_sublist(self, description):
+    def get_color_areas_with_conditions_sublist(self, description):
         color_sublist = []
         for a in self.color_areas:
-            if a.condition in description:
+            if a.condition and a.condition in description:
                 color_sublist.append(a)
         return color_sublist
+
+
+    def get_color_areas_no_conditions_sublist(self):
+        color_sublist = []
+        for a in self.color_areas:
+            if not a.condition:
+                color_sublist.append(a)
+        return color_sublist
+
