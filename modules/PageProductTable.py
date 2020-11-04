@@ -15,10 +15,11 @@ class PageProductTable:
     """ contains products in a dictionary """
 
     def __init__(self, page_number, selection_dfs):
+        self._pagenumber = page_number
         self._selection_dfs = selection_dfs
         self.selection_objects = [Selection(df) for df in selection_dfs]
         self.set_selection_types()  # init selection types
-        self._pagenumber = page_number
+
         # self.lines = lines
         # print("guessed_rows")
         # for row in guessed_rows:
@@ -82,7 +83,8 @@ class PageProductTable:
                 for line in area.pdf_line_list:
                     self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
                 if not self._series_name:
-                    self._series_name = area.pdf_line_list[0][0]
+                    self._series_name = area.pdf_line_list[0]._tabula_line[0]
+
 
             elif area.type == PFC.TYPE_CATEG and area.selection_as_line_list[0][0]:
                 self.group_prefix = area.selection_as_line_list[0][0] + ' '
@@ -119,6 +121,7 @@ class PageProductTable:
 
                             color_sublist = self.get_color_areas_with_conditions_sublist(self._subgroup)
                             if len(color_sublist):
+                                print("this should not be here", len(color_sublist))
                                 code_color_list = self.get_code_color(color_sublist)
                             else:
                                 color_sublist = self.get_color_areas_no_conditions_sublist()
@@ -225,11 +228,15 @@ class PageProductTable:
         return line_string
 
     def set_selection_types(self):
-        # initialize selection's type:
-        self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
-        # set remaining areas
-        for i in range(1, len(self.selection_objects)):
-            self.selection_objects[i].set_type()
+        try:
+            # initialize selection's type:
+            self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
+            # set remaining areas
+            for i in range(1, len(self.selection_objects)):
+                self.selection_objects[i].set_type()
+        except IndexError:
+            print(f"No selections on page {self._pagenumber}")
+
 
     def collect_packaging_selections(self):
         """ :return a list of packaging selections of the current page"""
@@ -298,7 +305,11 @@ class PageProductTable:
 
     def find_units_per_package(self):
         """:return units per carton for the product in the current line """
+        u_p_c = None
+        sf_ctn = None
+        ctn_plt = None
         upc_options = []
+
         for selection in self.packaging_selections:
             index_of_sf_per_ctn = None
             index_of_ctn_per_plt = None
@@ -310,8 +321,9 @@ class PageProductTable:
                 indexes = (index_of_sf_per_ctn, index_of_ctn_per_plt)
                 label_upc_sfctn_ctnplt = packaging_line.labeled_units_per_package(self._subgroup, self._item_size, indexes)
                 upc_options.append(label_upc_sfctn_ctnplt)
-        upc_options.sort(reverse=True, key=lambda item: item[0])
-        u_p_c = upc_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
-        sf_ctn = upc_options[0][2]
-        ctn_plt = upc_options[0][3]
+        if upc_options:
+            upc_options.sort(reverse=True, key=lambda item: item[0])
+            u_p_c = upc_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
+            sf_ctn = upc_options[0][2]
+            ctn_plt = upc_options[0][3]
         return (u_p_c, sf_ctn, ctn_plt)

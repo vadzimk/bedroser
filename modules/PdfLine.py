@@ -192,9 +192,9 @@ class PdfLine:
                     # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
-                upc = self._tabula_line[upc_index]
-                sf_ctn = self._tabula_line[sf_ctn_index]
-                ctn_plt = self._tabula_line[ctn_plt_index]
+                upc = self._tabula_line[upc_index] if upc_index else None
+                sf_ctn = self._tabula_line[sf_ctn_index] if sf_ctn_index else None
+                ctn_plt = self._tabula_line[ctn_plt_index] if ctn_plt_index else None
         # print(label, upc)
         return (label, upc, sf_ctn, ctn_plt)
 

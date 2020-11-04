@@ -91,8 +91,9 @@ class Selection:
             print('color table with condition')
         elif len(header) == 2:
             # color table with condition
-            condition = header[0].replace('Colors', '')
-            condition = "".join(condition.split())
+            if 'Colors' in header[0]:
+                condition = header[0].replace('Colors', '')
+                condition = "".join(condition.split())
             value_lines = self.selection_as_line_list[1:]
             names = [item[0] for item in value_lines]
             codes = [item[-1] for item in value_lines]

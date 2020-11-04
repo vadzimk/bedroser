@@ -118,14 +118,17 @@ class PdfPage:
                 stream=True, lattice=False, multiple_tables=True, guess=True,
                 area=tuple,
             )
-            df = df_list[0]  # the dictionary is on a singleton list
-            df = df.fillna('')  # nan fields are substituted by empty string
+            try:
+                df = df_list[0]  # the dictionary is on a singleton list
+                df = df.fillna('')  # nan fields are substituted by empty string
 
-            # # for testing
-            # export_dict_ragged_to_csv(df.to_dict(), self.midfilename)
-            # convert dataframe to list of rows including header
+                # # for testing
+                # export_dict_ragged_to_csv(df.to_dict(), self.midfilename)
+                # convert dataframe to list of rows including header
 
-            dict_list.append(df)
+                dict_list.append(df)
+            except IndexError:
+                print(f"No selections on page {pagenumber}" )
         return dict_list
 
     def convert_dataframe_tolist_of_lines(self, df):
