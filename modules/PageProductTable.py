@@ -1,4 +1,5 @@
 import functools
+from operator import attrgetter
 
 import pandas
 
@@ -32,6 +33,7 @@ class PageProductTable:
         # #     print(line._tabula_line)
         # print("__ end")
         self.colors = None  # for testing
+        self.colors_codes = []
 
         self.__products = {key: [] for key in
                            PFC.PRODUCT_TABLE_FIELDS}  # dictionary that will hold the items of the table
@@ -51,10 +53,8 @@ class PageProductTable:
         self.packaging_selections = self.collect_packaging_selections()  # a list of Packaging_selection objects of current page that is fixed by the time  build_table is called
 
         print("packaging_selections")
-        for sel in  self.packaging_selections:
+        for sel in self.packaging_selections:
             print(sel)
-
-
 
         self.group_prefix = ''  # represents category prefix of subgroup
 
@@ -90,6 +90,10 @@ class PageProductTable:
                 self.color_areas.append(area.color_area())
 
             elif area.type == PFC.TYPE_STOCK:
+                multiplier = self.set_color_multiplier()
+                print("multiplier", multiplier)
+                self.colors_codes = self.get_color_codes() # set color codes for the current Stock area
+
                 for line in area.pdf_line_list:
                     # if line.is_group_prefix_row():
                     #     self.group_prefix = line.find_group_prefix()
@@ -114,21 +118,29 @@ class PageProductTable:
                         print(line._tabula_line)
                         print(upc_options)
                         print()
-                        u_p_c = upc_options[0][1]
+                        u_p_c = upc_options[0][
+                            1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
 
                         self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
 
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
-                        chr = u'\u25CF'  # same as '\x25cf'
-                        if chr in item_code:   # TODO change to not in
+                        chr = u'\u25CF'
+
+                        if chr not in item_code:
                             self._vendor_code = item_code
                             self.push_attributes()
+                        else:
+                            left = item_code.split(chr)[0]
+                            right = item_code.split(chr)[-1]
+                            for ccode in self.colors_codes:
+                                # ● in item_code
+                                self._vendor_code = left + ccode + right
+                                self.push_attributes()
+
+
 
                         # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
                         #
-                        # multiplier = functools.reduce(lambda a, b: a.length + b.length, self.color_areas)
-                        # multiplier = multiplier if multiplier > 0 else 1
-                        # print("multiplier", multiplier)
 
                         # todo --- find all attributes for the line
                         # todo --- iterate over packaging information and attach packaging data
@@ -243,3 +255,21 @@ class PageProductTable:
                 else:
                     value = eval("self.%s" % (key))  # line at key
                 self.__products[key].append(value)
+
+    def set_color_multiplier(self):
+        """ :return color multiplier according to the length of all areas in the list containing color areas
+        if no color areas found, return 1 """
+        m = 0
+        for area in self.color_areas:
+            m += area.length
+        return m if m > 0 else 1
+
+    def get_color_codes(self):
+        """ :return a list of color codes to compute vendor code
+        for all areas where area.used == False"""
+        codes = []
+        for area in self.color_areas:
+            if not area.used:
+                for i in range(area.length):
+                    codes.append(area.color_dict.get('Code')[i])
+        return codes
