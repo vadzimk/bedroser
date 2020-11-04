@@ -21,7 +21,9 @@ PRODUCT_TABLE_FIELDS = [
     "_item_color",
     "_units_per_carton",
     "_units_of_measure",
-    "_unit_price"
+    "_unit_price",
+    "_sf_per_ctn",
+    "_ctn_per_plt"
 ]
 
 

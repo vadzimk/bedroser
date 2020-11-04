@@ -47,6 +47,8 @@ class PageProductTable:
         self._units_per_carton = None  # after testing change default value to 1
         self._units_of_measure = None
         self._unit_price = None
+        self._sf_per_ctn = None
+        self._ctn_per_plt = None
 
         # supplemental properties
         self.color_areas = []  # contains Color_area objects that are pushed as the build_table is running
@@ -91,9 +93,6 @@ class PageProductTable:
 
             elif area.type == PFC.TYPE_STOCK:
                 for line in area.pdf_line_list:
-                    # if line.is_group_prefix_row():
-                    #     self.group_prefix = line.find_group_prefix()
-                    #     continue   # don not push attributes to the dictionary - continue to the next iteration
                     if line._is_product_table_row:
                         g_name = self.group_prefix + line.find_group() if line.find_group() else self.group_prefix.strip()
                         self._group = g_name if g_name else self._group
@@ -103,21 +102,10 @@ class PageProductTable:
                         self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price
 
                         # extract packaging data for the item in STOCK area
-
-                        upc_options = []
-                        for selection in self.packaging_selections:
-                            for packaging_line in selection.pdf_line_list:
-                                # upc and its lable
-                                label_upc = packaging_line.find_units_per_carton(self._subgroup, self._item_size)
-                                upc_options.append(label_upc)
-                        upc_options.sort(reverse=True, key=lambda item: item[0])
-                        print(line._tabula_line)
-                        print(upc_options)
-                        print()
-                        u_p_c = upc_options[0][
-                            1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
-
+                        (u_p_c, sf_ctn, ctn_plt) = self.find_units_per_package()
                         self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
+                        self._sf_per_ctn = sf_ctn if sf_ctn else ""
+                        self._ctn_per_plt = ctn_plt if ctn_plt else ""
 
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
                         chr = u'\u25CF'
@@ -131,14 +119,15 @@ class PageProductTable:
 
                             color_sublist = self.get_color_areas_with_conditions_sublist(self._subgroup)
                             if len(color_sublist):
-                                colors_codes = self.get_color_codes(color_sublist)
+                                code_color_list = self.get_code_color(color_sublist)
                             else:
                                 color_sublist = self.get_color_areas_no_conditions_sublist()
-                                colors_codes = self.get_color_codes(color_sublist)
+                                code_color_list = self.get_code_color(color_sublist)
 
-                            for ccode in colors_codes:
+                            for (ccode, item_color) in code_color_list:
                                 # ● in item_code
                                 self._vendor_code = left + ccode + right
+                                self._item_color = item_color
                                 self.push_attributes()
 
 
@@ -146,9 +135,9 @@ class PageProductTable:
                         # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
                         #
 
-                        # todo --- find all attributes for the line
-                        # todo --- iterate over packaging information and attach packaging data
-                        # todo --- iterate over color dictionary and push this line necessary number of times to the cumulative dict
+                        # todo --- find all attributes for the line - item_color left
+                        # todo --- iterate over packaging information and attach packaging data done
+                        # todo --- iterate over color dictionary and push this line necessary number of times to the cumulative dict done
 
         print("Attributes:")
         print(self._series_name)
@@ -268,15 +257,22 @@ class PageProductTable:
             m += area.length
         return m if m > 0 else 1
 
-    def get_color_codes(self, color_areas):
-        """ :return a list of color codes to compute vendor code
+    def get_code_color(self, color_areas):
+        """ :return a list of tuples (color_code, item_color)
         for all areas where area.used == False"""
-        codes = []
+        code_color = []
         for area in color_areas:
             if not area.used:
                 for i in range(area.length):
-                    codes.append(area.color_dict.get('Code')[i])
-        return codes
+                    color_code = area.color_dict.get('Code')[i]
+                    item_color = []
+                    for key in area.color_dict.keys():
+                        item_color.append(area.color_dict[key][i])
+                    item_color = " ".join(item_color)
+                    code_color.append((color_code, item_color))
+        return code_color
+
+
 
     def get_color_conditions(self):
         conditions = []
@@ -300,3 +296,22 @@ class PageProductTable:
                 color_sublist.append(a)
         return color_sublist
 
+    def find_units_per_package(self):
+        """:return units per carton for the product in the current line """
+        upc_options = []
+        for selection in self.packaging_selections:
+            index_of_sf_per_ctn = None
+            index_of_ctn_per_plt = None
+            for packaging_line in selection.pdf_line_list:
+                if 'Sf/Ctn' in packaging_line._tabula_line:
+                    index_of_sf_per_ctn = packaging_line._tabula_line.index('Sf/Ctn')
+                if 'Ctn/Plt' in packaging_line._tabula_line:
+                    index_of_ctn_per_plt = packaging_line._tabula_line.index('Ctn/Plt')
+                indexes = (index_of_sf_per_ctn, index_of_ctn_per_plt)
+                label_upc_sfctn_ctnplt = packaging_line.labeled_units_per_package(self._subgroup, self._item_size, indexes)
+                upc_options.append(label_upc_sfctn_ctnplt)
+        upc_options.sort(reverse=True, key=lambda item: item[0])
+        u_p_c = upc_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
+        sf_ctn = upc_options[0][2]
+        ctn_plt = upc_options[0][3]
+        return (u_p_c, sf_ctn, ctn_plt)

@@ -157,8 +157,8 @@ class PdfLine:
     # def contains_units_per_carton(self):
     #     pass
 
-    def find_units_per_carton(self, description, size):
-
+    def labeled_units_per_package(self, description, size, indexes):
+        (sf_ctn_index, ctn_plt_index) = indexes
         # print(description)
         # print(size)
         # print(self._tabula_line)
@@ -173,8 +173,10 @@ class PdfLine:
         #     print(self._tabula_line)
 
         upc = None
+        sf_ctn = None
+        ctn_plt = None
         label = 0
-        index = 1
+        upc_index = 1
         if "Pcs/Ctn" not in self._tabula_line:
             packaging_info_set = set(str(self._tabula_line[0]).split())
 
@@ -190,9 +192,11 @@ class PdfLine:
                     # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
-                upc = self._tabula_line[index]
+                upc = self._tabula_line[upc_index]
+                sf_ctn = self._tabula_line[sf_ctn_index]
+                ctn_plt = self._tabula_line[ctn_plt_index]
         # print(label, upc)
-        return (label, upc)
+        return (label, upc, sf_ctn, ctn_plt)
 
 
 
