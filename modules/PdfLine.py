@@ -90,7 +90,7 @@ class PdfLine:
                 index = -4
                 subgroup_name = self._tabula_line[index]
                 subgroup_name = " ".join(subgroup_name.split()[1:])
-        return subgroup_name
+        return subgroup_name.replace('*', '')
 
     def find_group_prefix(self):
         """ :return subcategory or empty string """

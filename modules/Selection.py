@@ -102,6 +102,7 @@ class Selection:
             value = self.selection_as_line_list[1:]
             color_dict = {key: value}
 
+        print("condition:", condition)
         pprint(color_dict)
 
         return (color_dict, condition)

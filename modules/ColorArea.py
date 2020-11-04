@@ -11,6 +11,7 @@ class ColorArea:
         self.used = False  # a flag that is changed to true after the stock area finished processing and next type of area comes in
 
     def __str__(self):
+        print("Condition:", self.condition)
         pprint(self.color_dict)
 
 

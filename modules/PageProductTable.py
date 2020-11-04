@@ -33,7 +33,7 @@ class PageProductTable:
         # #     print(line._tabula_line)
         # print("__ end")
         self.colors = None  # for testing
-        self.colors_codes = []
+
 
         self.__products = {key: [] for key in
                            PFC.PRODUCT_TABLE_FIELDS}  # dictionary that will hold the items of the table
@@ -90,10 +90,6 @@ class PageProductTable:
                 self.color_areas.append(area.color_area())
 
             elif area.type == PFC.TYPE_STOCK:
-                multiplier = self.set_color_multiplier()
-                print("multiplier", multiplier)
-                self.colors_codes = self.get_color_codes() # set color codes for the current Stock area
-
                 for line in area.pdf_line_list:
                     # if line.is_group_prefix_row():
                     #     self.group_prefix = line.find_group_prefix()
@@ -132,7 +128,11 @@ class PageProductTable:
                         else:
                             left = item_code.split(chr)[0]
                             right = item_code.split(chr)[-1]
-                            for ccode in self.colors_codes:
+
+                            color_sublist = self.get_color_area_sublist(self._subgroup)
+
+                            colors_codes = self.get_color_codes(color_sublist)  # set color codes for the current Stock area
+                            for ccode in colors_codes:
                                 # ● in item_code
                                 self._vendor_code = left + ccode + right
                                 self.push_attributes()
@@ -256,20 +256,34 @@ class PageProductTable:
                     value = eval("self.%s" % (key))  # line at key
                 self.__products[key].append(value)
 
-    def set_color_multiplier(self):
+    def set_color_multiplier(self, color_areas):
         """ :return color multiplier according to the length of all areas in the list containing color areas
         if no color areas found, return 1 """
         m = 0
-        for area in self.color_areas:
+        for area in color_areas:
             m += area.length
         return m if m > 0 else 1
 
-    def get_color_codes(self):
+    def get_color_codes(self, color_areas):
         """ :return a list of color codes to compute vendor code
         for all areas where area.used == False"""
         codes = []
-        for area in self.color_areas:
+        for area in color_areas:
             if not area.used:
                 for i in range(area.length):
                     codes.append(area.color_dict.get('Code')[i])
         return codes
+
+    def get_color_conditions(self):
+        conditions = []
+        for area in self.color_areas:
+            if not area.used:
+                conditions.append(area.condition)
+        return conditions
+
+    def get_color_area_sublist(self, description):
+        color_sublist = []
+        for a in self.color_areas:
+            if a.condition in description:
+                color_sublist.append(a)
+        return color_sublist
