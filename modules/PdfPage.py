@@ -116,7 +116,7 @@ class PdfPage:
             df_list = tabula.read_pdf(
                 input_path=infilename, output_format="dataframe", pages=pagenumber,
                 stream=True, lattice=False, multiple_tables=True, guess=True,
-                area=tuple,
+                area=tuple, encoding='utf-8'
             )
             try:
                 df = df_list[0]  # the dictionary is on a singleton list

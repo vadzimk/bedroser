@@ -35,7 +35,6 @@ class PageProductTable:
         # print("__ end")
         self.colors = None  # for testing
 
-
         self.__products = {key: [] for key in
                            PFC.PRODUCT_TABLE_FIELDS}  # dictionary that will hold the items of the table
         #  fields of the csv data frame:
@@ -60,6 +59,7 @@ class PageProductTable:
             print(sel)
 
         self.group_prefix = ''  # represents category prefix of subgroup
+        self.contains_panel = False
 
         # print("num pack sel", len(self.packaging_selections))
 
@@ -82,6 +82,9 @@ class PageProductTable:
             if area.type == PFC.TYPE_TITLE:
                 for line in area.pdf_line_list:
                     self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
+                    for item in line._tabula_line:
+                        if 'Panel' in item:
+                            self.contains_panel = True
                 if not self._series_name:
                     self._series_name = area.pdf_line_list[0]._tabula_line[0]
 
@@ -96,9 +99,19 @@ class PageProductTable:
             elif area.type == PFC.TYPE_STOCK:
                 for line in area.pdf_line_list:
                     if line._is_product_table_row:
+                        self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
+
+                        if self.group_prefix in self._subgroup:
+                            # do not join prefix
+                            self.group_prefix = ''
+
                         g_name = self.group_prefix + line.find_group() if line.find_group() else self.group_prefix.strip()
                         self._group = g_name if g_name else self._group
-                        self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
+                        if not self._group and self.contains_panel:
+                            self._group = 'Panel'
+                        # print("self._group-----------", self._group)
+                        # print("contains_panel", self.contains_panel)
+
                         self._item_size = line.find_item_size() if line.find_item_size() else self._item_size
                         self._units_of_measure = line.find_units_of_measure() if line.find_units_of_measure() else self._units_of_measure
                         self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price
@@ -111,8 +124,8 @@ class PageProductTable:
 
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
                         chr = u'\u25CF'
-
-                        if chr not in item_code:
+                        count_placeholder = item_code.count(chr)
+                        if not count_placeholder:  # char is not in the item_code
                             self._vendor_code = item_code
                             self.push_attributes()
                         else:
@@ -128,12 +141,10 @@ class PageProductTable:
                                 code_color_list = self.get_code_color(color_sublist)
 
                             for (ccode, item_color) in code_color_list:
-                                # ● in item_code
-                                self._vendor_code = left + ccode + right
-                                self._item_color = item_color
-                                self.push_attributes()
-
-
+                                if len(str(ccode)) == count_placeholder:
+                                    self._vendor_code = str(left) + str(ccode) + str(right)
+                                    self._item_color = item_color
+                                    self.push_attributes()
 
                         # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
                         #
@@ -237,7 +248,6 @@ class PageProductTable:
         except IndexError:
             print(f"No selections on page {self._pagenumber}")
 
-
     def collect_packaging_selections(self):
         """ :return a list of packaging selections of the current page"""
         packaging_selections = []
@@ -274,12 +284,10 @@ class PageProductTable:
                     color_code = area.color_dict.get('Code')[i]
                     item_color = []
                     for key in area.color_dict.keys():
-                        item_color.append(area.color_dict[key][i])
+                        item_color.append(str(area.color_dict[key][i]))
                     item_color = " ".join(item_color)
                     code_color.append((color_code, item_color))
         return code_color
-
-
 
     def get_color_conditions(self):
         conditions = []
@@ -294,7 +302,6 @@ class PageProductTable:
             if a.condition and a.condition in description:
                 color_sublist.append(a)
         return color_sublist
-
 
     def get_color_areas_no_conditions_sublist(self):
         color_sublist = []
@@ -319,10 +326,13 @@ class PageProductTable:
                 if 'Ctn/Plt' in packaging_line._tabula_line:
                     index_of_ctn_per_plt = packaging_line._tabula_line.index('Ctn/Plt')
                 indexes = (index_of_sf_per_ctn, index_of_ctn_per_plt)
-                label_upc_sfctn_ctnplt = packaging_line.labeled_units_per_package(self._subgroup, self._item_size, indexes)
+                label_upc_sfctn_ctnplt = packaging_line.labeled_units_per_package(self._subgroup, self._item_size,
+                                                                                  indexes)
                 upc_options.append(label_upc_sfctn_ctnplt)
         if upc_options:
+            upc_options.reverse() # in case old and new info is presented, will grab the last one
             upc_options.sort(reverse=True, key=lambda item: item[0])
+            print("upc_options", upc_options)
             u_p_c = upc_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
             sf_ctn = upc_options[0][2]
             ctn_plt = upc_options[0][3]

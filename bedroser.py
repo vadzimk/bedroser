@@ -26,7 +26,7 @@ def main():
     infilename_n_pages = determine_n_pages(infilename)
     print(f"The number of pages in this file is: {infilename_n_pages}")
 
-    page_start = 119
+    page_start = 53
 
     # commented while testing
     # page_start = ask_for_starting_page(infilename_n_pages)

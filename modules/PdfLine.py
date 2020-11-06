@@ -1,5 +1,8 @@
+import re
+
 import modules.PDF_CONST as PFC
 from modules.func import *
+
 
 class PdfLine:
     """A line of the Pdf input file"""
@@ -65,10 +68,17 @@ class PdfLine:
         index = 0
         if self._is_product_table_row:
             group_name = self._tabula_line[index]
+            if self._line_len == 6:
+                if isinstance(self._tabula_line[index], int):
+                    self._tabula_line[index] = ''
+                group_name = self._tabula_line[index]
             if self._line_len == 5:  # the prefix above the line became the column header
                 group_name = " ".join(group_name.split()[:-1]) if len(group_name.split()) > 1 else None
             elif self._line_len == 7:
+                if isinstance(self._tabula_line[0], int):
+                    self._tabula_line[0] = ''
                 group_name = " ".join(self._tabula_line[:2]).replace('\xf8', '').strip()
+
         if 'Stock' in group_name or 'NEW' in group_name or 'Only' in group_name or 'Discontinued' in group_name:
             group_name = None
 
@@ -178,8 +188,11 @@ class PdfLine:
         label = 0
         upc_index = 1
         if "Pcs/Ctn" not in self._tabula_line:
-            packaging_info_set = set(str(self._tabula_line[0]).split())
-
+            # https://stackoverflow.com/questions/4998629/split-string-with-multiple-delimiters-in-python
+            # https://docs.python.org/3/library/re.html
+            s = str(self._tabula_line[0]).strip()
+            pack_info = re.split('\s|[\-](?!\d)', s) # split if \s or \- not followed by a digit
+            packaging_info_set = set(pack_info)
             for p_item in packaging_info_set:
                 for d_item in description_arr:
                     if d_item == p_item:
@@ -197,8 +210,6 @@ class PdfLine:
                 ctn_plt = self._tabula_line[ctn_plt_index] if ctn_plt_index else None
         # print(label, upc)
         return (label, upc, sf_ctn, ctn_plt)
-
-
 
     def find_units_of_measure(self):
         uom = None
