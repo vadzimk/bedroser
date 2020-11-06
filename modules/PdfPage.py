@@ -112,11 +112,17 @@ class PdfPage:
         selection_coordinates.sort(key=lambda selection: selection[0])  # sort by y1
         dict_list = []  # list of rows representing current page
         # print("read_with_json_tabula:")
-        for tuple in selection_coordinates:
+
+        column_coordinates = None
+
+        if pagenumber == 104:
+            column_coordinates = PFC.COLUMN_X_COORDINATES_104_or106
+
+        for c_tuple in selection_coordinates:
             df_list = tabula.read_pdf(
                 input_path=infilename, output_format="dataframe", pages=pagenumber,
                 stream=True, lattice=False, multiple_tables=True, guess=True,
-                area=tuple, encoding='utf-8'
+                area=c_tuple, encoding='utf-8', columns=column_coordinates
             )
             try:
                 df = df_list[0]  # the dictionary is on a singleton list

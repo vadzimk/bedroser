@@ -82,6 +82,9 @@ class PdfLine:
         if 'Stock' in group_name or 'NEW' in group_name or 'Only' in group_name or 'Discontinued' in group_name:
             group_name = None
 
+        if group_name:
+            group_name = " ".join(str(group_name).replace('*','').split())
+
         return group_name
 
     # def contains_subgroup(self):
@@ -94,13 +97,15 @@ class PdfLine:
         subgroup_name = None
         index = -3
         if self._is_product_table_row:
-            if self._line_len == 6 or self._line_len == 7 or (self._line_len == 5 and self._num_blanks == 0):
+            if (self._line_len == 5 and self._num_blanks == 0) or self._line_len > 5:
                 subgroup_name = self._tabula_line[index]
             elif self._line_len == 5 and self._num_blanks == 1:  # the prefix above the line became the column header
                 index = -4
                 subgroup_name = self._tabula_line[index]
                 subgroup_name = " ".join(subgroup_name.split()[1:])
-        return subgroup_name.replace('*', '')
+        if subgroup_name:
+            subgroup_name = subgroup_name.replace('*', '')
+        return subgroup_name
 
     def find_group_prefix(self):
         """ :return subcategory or empty string """
@@ -121,6 +126,8 @@ class PdfLine:
             item_size = self._tabula_line[index]
             if self._line_len == 5 and self._num_blanks == 1:
                 item_size = item_size.split()[0]
+        if item_size:
+            item_size = re.sub('^\.', '', item_size) # fix occasional '.5x12.5' on p 68
         return item_size
 
     # def contains_vendor_code(self):
@@ -194,21 +201,25 @@ class PdfLine:
             pack_info = re.split('\s|[\-](?!\d)', s) # split if \s or \- not followed by a digit
             packaging_info_set = set(pack_info)
             for p_item in packaging_info_set:
+                p_item = str(p_item).lower()
                 for d_item in description_arr:
+                    d_item = str(d_item).lower()
                     if d_item == p_item:
                         label += 1
-                    # print(d_item , p_item, d_item == p_item)
+
+                    print(d_item , p_item, d_item == p_item)
 
                 for s_item in size_arr:
+                    s_item = str(s_item).lower()
                     if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item):
                         label += 1
-                    # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
+                    print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
                 upc = self._tabula_line[upc_index] if upc_index else None
                 sf_ctn = self._tabula_line[sf_ctn_index] if sf_ctn_index else None
                 ctn_plt = self._tabula_line[ctn_plt_index] if ctn_plt_index else None
-        # print(label, upc)
+
         return (label, upc, sf_ctn, ctn_plt)
 
     def find_units_of_measure(self):

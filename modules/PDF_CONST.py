@@ -36,6 +36,7 @@ TYPE_PACKAGING = 'PACKAGING_AREA'
 
 
 COLUMN_X_COORDINATES = [120.024,219.621,339.538, 465.504, 505.089, 532.494, 573.602]  # x coordinates of columns for tabula.read_pdf
+COLUMN_X_COORDINATES_104_or106 = [95.000, 155.000, 245.000, 300.000, 490.000, 535.000, 587.000]
 
 TABLE_COORDINATES = (31.591, 17.128, 740.303, 591.110) #Portion of the page to analyze(top,left,bottom,right) $y1,$x1,$y2,$x2
 

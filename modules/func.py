@@ -10,6 +10,7 @@ from html.parser import HTMLParser
 from modules import PROJ_CONST as PR
 import pandas
 import csv
+from PyPDF2 import PdfFileReader
 
 
 def cleanup():
@@ -68,15 +69,9 @@ def create_project():
 
 def determine_n_pages(infilename):
     """determine number of pages in the infile"""
-    infilename_n_pages = -1
-    command = "pdfinfo.exe {}".format(infilename)
-    pdfinfo_process = subprocess.run(command, capture_output=True)
-
-    pdfinfo_output = pdfinfo_process.stdout.decode('utf8').splitlines()
-    for item in pdfinfo_output:
-        if "Pages" in item:
-            infilename_n_pages = item.split()[-1]
-    return int(infilename_n_pages)
+    with open(infilename, 'rb') as fl:
+        reader = PdfFileReader(fl)
+        return reader.getNumPages()
 
 
 def ask_for_filename(args):

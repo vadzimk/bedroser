@@ -52,6 +52,8 @@ class PageProductTable:
 
         # supplemental properties
         self.color_areas = []  # contains Color_area objects that are pushed as the build_table is running
+        self.reset_color_areas = False  # gets True when Stock selection is encountered, the next color area encountered will set all color areas in self.color_areas used property to True
+
         self.packaging_selections = self.collect_packaging_selections()  # a list of Packaging_selection objects of current page that is fixed by the time  build_table is called
 
         print("packaging_selections")
@@ -60,6 +62,7 @@ class PageProductTable:
 
         self.group_prefix = ''  # represents category prefix of subgroup
         self.contains_panel = False
+
 
         # print("num pack sel", len(self.packaging_selections))
 
@@ -94,14 +97,22 @@ class PageProductTable:
                 print("group prefix", self.group_prefix)
 
             elif area.type == PFC.TYPE_COLOR:
-                self.color_areas.append(area.color_area())
+                if self.reset_color_areas:
+                    # gets True when Stock selection is encountered, the next color area encountered will set all color areas in self.color_areas used property to True and self.reset_color_areas back to False
+                    for a in self.color_areas:
+                        a.used = True
+                    self.reset_color_areas = False
+
+                color_area_obj = area.color_area()
+                self.color_areas.append(color_area_obj)
 
             elif area.type == PFC.TYPE_STOCK:
+                self.reset_color_areas = True
                 for line in area.pdf_line_list:
                     if line._is_product_table_row:
                         self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
 
-                        if self.group_prefix in self._subgroup:
+                        if self._subgroup and (self.group_prefix in self._subgroup):
                             # do not join prefix
                             self.group_prefix = ''
 
@@ -118,6 +129,7 @@ class PageProductTable:
 
                         # extract packaging data for the item in STOCK area
                         (u_p_c, sf_ctn, ctn_plt) = self.find_units_per_package()
+
                         self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
                         self._sf_per_ctn = sf_ctn if sf_ctn else ""
                         self._ctn_per_plt = ctn_plt if ctn_plt else ""
@@ -125,7 +137,7 @@ class PageProductTable:
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
                         chr = u'\u25CF'
                         count_placeholder = item_code.count(chr)
-                        if not count_placeholder:  # char is not in the item_code
+                        if not count_placeholder:  # chr is not in the item_code
                             self._vendor_code = item_code
                             self.push_attributes()
                         else:
@@ -332,7 +344,9 @@ class PageProductTable:
         if upc_options:
             upc_options.reverse() # in case old and new info is presented, will grab the last one
             upc_options.sort(reverse=True, key=lambda item: item[0])
+
             print("upc_options", upc_options)
+
             u_p_c = upc_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
             sf_ctn = upc_options[0][2]
             ctn_plt = upc_options[0][3]
