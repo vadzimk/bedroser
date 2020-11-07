@@ -211,9 +211,9 @@ class PdfLine:
 
                 for s_item in size_arr:
                     s_item = str(s_item).lower()
-                    if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item):
-                        label += 1
-                    # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
+                    if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item) or dim_roughly_equals(fract_dim_to_float_dim(s_item), p_item):
+                        label += 2 # weight of the label is greater for size info
+                    # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item), dim_roughly_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
                 upc = self._tabula_line[upc_index] if upc_index else None

@@ -158,6 +158,8 @@ class PageProductTable:
                                 code_color_list = self.get_code_color(color_sublist)
 
                             for (ccode, item_color) in code_color_list:
+                                # comment out line below if need to differentiate b/w len of placeholder
+                                count_placeholder = len(str(ccode))  # treat all placeholders as having the same len (requirement)
                                 if len(str(ccode)) == count_placeholder:
                                     self._vendor_code = str(left) + str(ccode) + str(right)
                                     self._item_color = item_color
@@ -166,9 +168,7 @@ class PageProductTable:
                         # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
                         #
 
-                        # todo --- find all attributes for the line - item_color left
-                        # todo --- iterate over packaging information and attach packaging data done
-                        # todo --- iterate over color dictionary and push this line necessary number of times to the cumulative dict done
+
 
         # print("Attributes:")
         # print(self._series_name)
@@ -182,15 +182,7 @@ class PageProductTable:
         # for item in area.selection_as_dict.keys():
         #     if
 
-        # todo p 42 contains many color areas and packaging info on the next page!
-        # todo: move the
-        #    #  represent selections as lists of lines
-        #         self.selections_as_line_lists = self.convert_list_of_dataframes_to_selection_lines(self.selection_dataframes)
-        #
-        #  todo ; to the Pageproduct table to manipulate
-        #  todo ; areas are sorted thus can be processed successively
-        #  todo ; for each area in the page
-        #  todo ; pass current_area to create a list of PdfLines and extract relevant properties
+
 
         """ sees what fields are detected by the PdfLine and builds product table"""
         # for line in self.lines:  # line comes form fixed column recognition

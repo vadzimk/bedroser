@@ -2,6 +2,7 @@ from modules.func import *
 import sys
 import time
 from modules.PdfDoc import PdfDoc
+from modules.tf import create_target_and_uom
 
 def main():
     try:
@@ -66,22 +67,28 @@ def main():
         print(f"Access to {PR.DOC_PRODUCT_TABLE} denied\nClose applications that might use it and try again")
         return
 
-    # print(f"Creating template file and UOM file...")
-    #
-    # try:
-    #     create_target_and_uom()
-    # except PermissionError:
-    #     print(f"Access to {PR.DOC_UOM} or {PR.DOC_TARGET} denied\nClose applications that might use it and try again")
-    #     return
-    #
-    # end_time = time.time()
-    # hours, rem = divmod(end_time - start_time, 3600)
-    # minutes, seconds = divmod(rem, 60)
-    # print(f"Task finished.\n"
-    #       f"Time elapsed: {minutes:.0f} min {seconds:.0f} sec\n"
-    #       f"See:\n{PR.DIR_PROJECT}product_table.csv\n"
-    #       f"{PR.DOC_TARGET}\n"
-    #       f"{PR.DOC_UOM}")
+    end_time = time.time()
+    hours, rem = divmod(end_time - start_time, 3600)
+    minutes, seconds = divmod(rem, 60)
+    print(f"Task finished.\n"
+          f"Time elapsed: {minutes:.0f} min {seconds:.0f} sec\n"
+          f"See:\n{PR.DIR_PROJECT}product_table.csv\n")
+
+
+
+    create_target_uom_files = input(f"Create target.csv, uom.csv (y/n) ? ")
+    print(f"Creating template file and UOM file...")
+    if create_target_uom_files:
+        try:
+            create_target_and_uom()
+        except PermissionError:
+            print(f"Access to {PR.DOC_UOM} or {PR.DOC_TARGET} denied\nClose applications that might use it and try again")
+            return
+
+    print(f"Task finished.\n"          
+          f"{PR.DOC_TARGET}\n"
+          f"{PR.DOC_UOM}")
+
 
 
 if __name__ == "__main__":
