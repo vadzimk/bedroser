@@ -30,12 +30,26 @@ class PdfDoc:
         self._pages = _pages
 
     def create_product_tables(self):
-        for p in reversed(self._pages):
-            p.create_product_table()
+        self._pages.reverse()
+        self._pages[0].create_product_table()  # create table of the last page
+        p_t = self._pages[0].product_table
+        p_t.build_table()  # push attributes to the dict
+        ext_pckg = p_t.packaging_selections
+        ext_series = p_t._series_name
+        #  create tables of the rest of the pages (in reverse order)
+        for i in range(1, len(self._pages)):
+            self._pages[i].create_product_table()
+            p_t = self._pages[i].product_table
+            p_t.build_table(ext_pckg, ext_series)  # push attributes to the dict
+            if p_t.packaging_selections:
+                ext_pckg = p_t.packaging_selections
+                ext_series = p_t._series_name
+        self._pages.reverse()
+
         # self._pages[len(self._pages) - 1].create_product_table()  # ceate last product table with no external color list
 
     def construct_cumulative_dict(self):
-        self.__list_of_all_product_dicts = [page._product_table.get_products() for page in self._pages]
+        self.__list_of_all_product_dicts = [page.product_table.get_products() for page in self._pages]
 
         # construct cumulative dictionary
         for key in PFC.PRODUCT_TABLE_FIELDS:

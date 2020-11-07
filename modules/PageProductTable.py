@@ -66,7 +66,7 @@ class PageProductTable:
 
         # print("num pack sel", len(self.packaging_selections))
 
-        self.build_table()  # put products in the dictionary
+        # self.build_table()  # put products in the dictionary
 
         # TODO keep this
         # export product table as csv
@@ -76,7 +76,8 @@ class PageProductTable:
         # # export treated rows as csv
         # self.export_treated_rows()
 
-    def build_table(self):
+    def build_table(self, ext_pckg=None, ext_series=None):
+        # put products in the dictionary
         print("build_table:")
 
         for area in self.selection_objects:
@@ -128,7 +129,11 @@ class PageProductTable:
                         self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price
 
                         # extract packaging data for the item in STOCK area
-                        (u_p_c, sf_ctn, ctn_plt) = self.find_units_per_package()
+                        pack_selecions = self.packaging_selections
+                        if not pack_selecions:
+                            if str(ext_series).lower() == str(self._series_name).lower():
+                                pack_selecions = ext_pckg
+                        (u_p_c, sf_ctn, ctn_plt) = self.find_units_per_package(pack_selecions)
 
                         self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
                         self._sf_per_ctn = sf_ctn if sf_ctn else ""
@@ -322,14 +327,14 @@ class PageProductTable:
                 color_sublist.append(a)
         return color_sublist
 
-    def find_units_per_package(self):
+    def find_units_per_package(self, packaging_selections):
         """:return units per carton for the product in the current line """
         u_p_c = None
         sf_ctn = None
         ctn_plt = None
         upc_options = []
 
-        for selection in self.packaging_selections:
+        for selection in packaging_selections:
             index_of_sf_per_ctn = None
             index_of_ctn_per_plt = None
             for packaging_line in selection.pdf_line_list:

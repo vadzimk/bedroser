@@ -64,7 +64,7 @@ class PdfPage:
         # print("contains color table", self._contains_color_table)
 
         # moved creation of product tables to the PdfDoc class
-        self._product_table = None  # main table of the page containing its products together with all attributes
+        self.product_table = None  # main table of the page containing its products together with all attributes
 
         # export tabulated csv for current pagenumber
         write_line_list_to_csv(self.list_of_page_tabula_rows, self.midfilename)
@@ -95,8 +95,8 @@ class PdfPage:
         # if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
 
         # was passed selected_areas=self.selections_as_line_lists
-        self._product_table = PageProductTable(page_number=self.pagenumber,
-                                               selection_dfs=self.selection_dataframes)
+        self.product_table = PageProductTable(page_number=self.pagenumber,
+                                              selection_dfs=self.selection_dataframes)
         # else:  # page doesn't contin color info in itself
         #     self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
         #                                            external_color_list)
