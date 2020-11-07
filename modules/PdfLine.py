@@ -207,13 +207,13 @@ class PdfLine:
                     if d_item == p_item:
                         label += 1
 
-                    print(d_item , p_item, d_item == p_item)
+                    # print(d_item , p_item, d_item == p_item)
 
                 for s_item in size_arr:
                     s_item = str(s_item).lower()
                     if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item):
                         label += 1
-                    print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
+                    # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
                 upc = self._tabula_line[upc_index] if upc_index else None

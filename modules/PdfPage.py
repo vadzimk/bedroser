@@ -56,7 +56,7 @@ class PdfPage:
 
         # self._page_contains_color_info = self.page_contains_color_info()
 
-        self._color_list = None
+        # self._color_list = None
         # # below initialise the color list
         # if self._contains_color_table:
         #     self._color_list = self.extract_color_list_with_tabula_lattice()
@@ -84,7 +84,7 @@ class PdfPage:
     #     contains = self.contains_color_table_header()
     #     return contains
 
-    def create_product_table(self, external_color_list=None):
+    def create_product_table(self):
         # print(self.pagenumber, "PdfPage._page_contains_color_info", self._page_contains_color_info)
         # print(self.pagenumber, "PdfPage._color_list", self._color_list)
         # print(self.pagenumber, "external color list", external_color_list)

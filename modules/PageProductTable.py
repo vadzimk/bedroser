@@ -165,14 +165,14 @@ class PageProductTable:
                         # todo --- iterate over packaging information and attach packaging data done
                         # todo --- iterate over color dictionary and push this line necessary number of times to the cumulative dict done
 
-        print("Attributes:")
-        print(self._series_name)
-        print(self._group)
-        print(self._subgroup)
-        print(self._item_size)
-        print(self._units_of_measure)
-        print(self._unit_price)
-        print(self._units_per_carton)
+        # print("Attributes:")
+        # print(self._series_name)
+        # print(self._group)
+        # print(self._subgroup)
+        # print(self._item_size)
+        # print(self._units_of_measure)
+        # print(self._unit_price)
+        # print(self._units_per_carton)
 
         # for item in area.selection_as_dict.keys():
         #     if

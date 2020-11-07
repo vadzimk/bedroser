@@ -30,9 +30,9 @@ class PdfDoc:
         self._pages = _pages
 
     def create_product_tables(self):
-        for i in range(len(self._pages) - 1):
-            self._pages[i].create_product_table(self._pages[i + 1]._color_list)
-        self._pages[len(self._pages) - 1].create_product_table()  # ceate last product table with no external color list
+        for p in reversed(self._pages):
+            p.create_product_table()
+        # self._pages[len(self._pages) - 1].create_product_table()  # ceate last product table with no external color list
 
     def construct_cumulative_dict(self):
         self.__list_of_all_product_dicts = [page._product_table.get_products() for page in self._pages]
