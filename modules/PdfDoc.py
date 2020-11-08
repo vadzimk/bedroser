@@ -8,9 +8,9 @@ from modules.func import *
 class PdfDoc:
     """ manages a list of PdfPage objects"""
 
-    def __init__(self, in_file_name, page_start=1, n_pages=1):
+    def __init__(self, in_file_name, config_dict, page_start=1, n_pages=1, ):
         """by default grabs the first page only"""
-
+        self.config_dict = config_dict
         self.page_start = page_start
         self.n_pages = n_pages
         self.in_file_name = in_file_name
@@ -24,6 +24,7 @@ class PdfDoc:
 
     def create_pages(self):
         _pages = [PdfPage(infilename=self.in_file_name,
+                          config_d=self.config_dict,
                           pagenumber=i,
                           coordinates=extract_page_data_from_json_data(json_data=self.jsondata, pagenumber=i)) for i in
                   range(self.page_start, self.page_start + self.n_pages)]  # list of PdfPage objects

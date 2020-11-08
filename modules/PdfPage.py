@@ -13,8 +13,9 @@ from pprint import pprint
 class PdfPage:
     """ converts Pdf page to csv, creates a list of PdfLine objects for each line and passes it to PdfProductTable and PdfColorTable"""
 
-    def __init__(self, infilename, pagenumber, coordinates):
+    def __init__(self, infilename, config_d, pagenumber, coordinates):
         self.infilename = infilename
+        self.config_d = config_d
         self.pagenumber = pagenumber
         self.coordinates = coordinates
         print("page:", self.pagenumber)  # print page number while creating
@@ -95,7 +96,7 @@ class PdfPage:
         # if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
 
         # was passed selected_areas=self.selections_as_line_lists
-        self.product_table = PageProductTable(page_number=self.pagenumber,
+        self.product_table = PageProductTable(conf_d=self.config_d, page_number=self.pagenumber,
                                               selection_dfs=self.selection_dataframes)
         # else:  # page doesn't contin color info in itself
         #     self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,

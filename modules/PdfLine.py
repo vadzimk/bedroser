@@ -175,7 +175,8 @@ class PdfLine:
     #     pass
 
     def labeled_units_per_package(self, description, size, indexes):
-        (sf_ctn_index, ctn_plt_index) = indexes
+        (pc_per_ctn_index, sf_ctn_index, ctn_plt_index) = indexes
+
         # print(description)
         # print(size)
         # print(self._tabula_line)
@@ -189,11 +190,12 @@ class PdfLine:
         #     print("size:", size_arr)
         #     print(self._tabula_line)
 
-        upc = None
+
+        p_pc = None
         sf_ctn = None
         ctn_plt = None
         label = 0
-        upc_index = 1
+
         if "Pcs/Ctn" not in self._tabula_line:
             # https://stackoverflow.com/questions/4998629/split-string-with-multiple-delimiters-in-python
             # https://docs.python.org/3/library/re.html
@@ -216,11 +218,11 @@ class PdfLine:
                     # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item), dim_roughly_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
-                upc = self._tabula_line[upc_index] if upc_index else None
+                p_pc = self._tabula_line[pc_per_ctn_index] if pc_per_ctn_index else None
                 sf_ctn = self._tabula_line[sf_ctn_index] if sf_ctn_index else None
                 ctn_plt = self._tabula_line[ctn_plt_index] if ctn_plt_index else None
 
-        return (label, upc, sf_ctn, ctn_plt)
+        return (label, p_pc, sf_ctn, ctn_plt)
 
     def find_units_of_measure(self):
         uom = None

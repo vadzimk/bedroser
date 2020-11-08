@@ -19,6 +19,9 @@ class Target:
         row_count = 1
 
         for i in range(len(list(source_d.values())[0])):
+            pagenumber = source_d["_pagenumber"][i]
+            self._dictionary["_pagenumber"].append(pagenumber)
+
             """ subscripts of source_d come from PRODUCT_TABLE_FIELDS
              subscripts of _dictionary come from TEMPLATE"""
             externalid = "{}-{:05d}".format(PFC.VENDOR_NAME_CODE, row_count)
@@ -50,35 +53,48 @@ class Target:
             displayname = displayname.upper()
             self._dictionary["displayname"].append(displayname)
 
-            sales_packaging_unit = self.packaging_unit_configued(
-                config_row_n)  # looks up in csv file the type of product and determines the sales unit
+            # looks up in csv file the type of product and determines the sales unit
+            sales_packaging_unit = self.packaging_unit_configued(config_row_n)
             self._dictionary["Sales Packaging Unit"].append(sales_packaging_unit)
 
-            units_per_carton = source_d['_units_per_carton'][i]
+            pieces_per_carton = source_d['_pieces_per_carton'][i]
+            sf_per_carton = source_d['_sf_per_ctn'][i]
+            ctn_per_plt = source_d['_ctn_per_plt'][i]
 
             """ salesdescription """
             units_of_measure = source_d["_units_of_measure"][i]  # not used but might replace sales_unit_abbreviated
-
+            if units_of_measure:
+                units_of_measure = units_of_measure.replace('S/F', 'SF')
 
             sales_unit_abbreviated = self._packaging_abbreviation[sales_packaging_unit]
-            self._dictionary["salesdescription"].append(
-                units_per_carton + " " + units_of_measure + "/BX" if not units_of_measure == "PC" else units_per_carton + " EA/BX")
+
+            sales_description = ''
+            if pieces_per_carton:
+                sales_description += str(pieces_per_carton) + " EA/BX "
+            if sf_per_carton:
+                sales_description += str(sf_per_carton) + " SF/BX "
+            if ctn_per_plt:
+                sales_description += str(ctn_per_plt) + " BX/PLT"
+
+
+            self._dictionary["salesdescription"].append(" ".join(sales_description.split()))
+
 
             # "Pcs in a Box",
             # "SQFT BY PCS/SHEET",
             # "SQFT BY BOX",
             if sales_unit_abbreviated == "EA":
-                self._dictionary["Pcs in a Box"].append(units_per_carton)
+                self._dictionary["Pcs in a Box"].append(pieces_per_carton)
                 self._dictionary["SQFT BY PCS/SHEET"].append("")
                 self._dictionary["SQFT BY BOX"].append("")
             elif sales_unit_abbreviated == "SHT":
                 self._dictionary["Pcs in a Box"].append("")
-                self._dictionary["SQFT BY PCS/SHEET"].append(units_per_carton)
+                self._dictionary["SQFT BY PCS/SHEET"].append(pieces_per_carton)
                 self._dictionary["SQFT BY BOX"].append("")
             elif sales_unit_abbreviated == "BX":
                 self._dictionary["Pcs in a Box"].append("")
                 self._dictionary["SQFT BY PCS/SHEET"].append("")
-                self._dictionary["SQFT BY BOX"].append(units_per_carton)
+                self._dictionary["SQFT BY BOX"].append(pieces_per_carton)
             else:
                 self._dictionary["Pcs in a Box"].append("")
                 self._dictionary["SQFT BY PCS/SHEET"].append("")
@@ -86,8 +102,8 @@ class Target:
 
             Sales_QTY_Per_Pack_Unit = 1
             if sales_packaging_unit == "BOX":
-                Sales_QTY_Per_Pack_Unit = units_per_carton
-            self._dictionary["Sales QTY Per Pack Unit"].append(units_per_carton)
+                Sales_QTY_Per_Pack_Unit = pieces_per_carton
+            self._dictionary["Sales QTY Per Pack Unit"].append(pieces_per_carton)
 
 
             number_string = source_d["_unit_price"][i]
@@ -137,7 +153,7 @@ class Target:
             self._dictionary["vendor2_subsidiary"].append(vendor2_subsidiary)
 
             self._dictionary["itemPriceLine1_itemPriceTypeRef"].append("BASE PRICE")  # constant for all vendors
-            print("Sales_QTY_Per_Pack_Unit", Sales_QTY_Per_Pack_Unit)
+            # print("Sales_QTY_Per_Pack_Unit", Sales_QTY_Per_Pack_Unit)
             if Sales_QTY_Per_Pack_Unit:
                 itemPriceLine1_itemPrice = Decimal(Sales_QTY_Per_Pack_Unit) * Decimal(sales_price)
             else:

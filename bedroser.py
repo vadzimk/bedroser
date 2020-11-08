@@ -49,7 +49,12 @@ def main():
     # # html_created = convert_to_html(infilename, page_start, page_start + n_pages_to_process - 1)
     # # print(f"Html files created...\nCreating product tables. Please wait...")
 
-    price_list = PdfDoc(infilename, page_start=page_start, n_pages=n_pages_to_process)
+    config_dictionary = read_to_dict(PR.TARGET_CONFIG)
+
+    price_list = PdfDoc(in_file_name=infilename,
+                        config_dict=config_dictionary,
+                        page_start=page_start,
+                        n_pages=n_pages_to_process)
 
     print(f"Reading pages:")
     price_list.create_pages()
@@ -77,8 +82,9 @@ def main():
 
 
     create_target_uom_files = input(f"Create target.csv, uom.csv (y/n) ? ")
+
     print(f"Creating template file and UOM file...")
-    if create_target_uom_files:
+    if create_target_uom_files.lower() == 'y':
         try:
             create_target_and_uom()
         except PermissionError:

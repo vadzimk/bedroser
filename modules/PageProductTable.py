@@ -1,4 +1,5 @@
 import functools
+import re
 from operator import attrgetter
 
 import pandas
@@ -11,11 +12,13 @@ import csv
 from pprint import pprint
 
 
+
 class PageProductTable:
     """ contains products in a dictionary """
 
-    def __init__(self, page_number, selection_dfs):
+    def __init__(self, conf_d, page_number, selection_dfs):
         self._pagenumber = page_number
+        self._config = conf_d # config dict from TARGET_CONFIG.csv
         self._selection_dfs = selection_dfs
         self.selection_objects = [Selection(df) for df in selection_dfs]
         self.set_selection_types()  # init selection types
@@ -34,6 +37,7 @@ class PageProductTable:
         # #     print(line._tabula_line)
         # print("__ end")
         self.colors = None  # for testing
+        self.description = None
 
         self.__products = {key: [] for key in
                            PFC.PRODUCT_TABLE_FIELDS}  # dictionary that will hold the items of the table
@@ -43,8 +47,8 @@ class PageProductTable:
         self._subgroup = None  # subgroup is like "BULLNOSE"
         self._vendor_code = None
         self._item_size = None
-        self._item_color = None
-        self._units_per_carton = None  # after testing change default value to 1
+        self._item_color = ''
+        self._pieces_per_carton = None  # after testing change default value to 1
         self._units_of_measure = None
         self._unit_price = None
         self._sf_per_ctn = None
@@ -111,9 +115,16 @@ class PageProductTable:
                 self.reset_color_areas = True
                 for line in area.pdf_line_list:
                     if line._is_product_table_row:
-                        self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
+                        self.description = line.find_subgroup() if line.find_subgroup() else self.description
+                        description_splitted = re.split('-', self.description, maxsplit=1)
+                        self._subgroup = description_splitted[0].strip()
 
-                        if self._subgroup and (self.group_prefix in self._subgroup):
+                        print("self._subgroup", self._subgroup)
+                        inline_color = ''
+                        (finish, inline_color) = self.find_finish_inline_color(description_splitted)
+                        print("finish, inline color", (finish, inline_color))
+
+                        if self.description and (self.group_prefix in self.description):
                             # do not join prefix
                             self.group_prefix = ''
 
@@ -133,9 +144,9 @@ class PageProductTable:
                         if not pack_selecions:
                             if str(ext_series).lower() == str(self._series_name).lower():
                                 pack_selecions = ext_pckg
-                        (u_p_c, sf_ctn, ctn_plt) = self.find_units_per_package(pack_selecions)
+                        (pc_ctn, sf_ctn, ctn_plt) = self.find_units_per_package(pack_selecions)
 
-                        self._units_per_carton = u_p_c if u_p_c else self._units_per_carton
+                        self._pieces_per_carton = pc_ctn if pc_ctn else self._pieces_per_carton
                         self._sf_per_ctn = sf_ctn if sf_ctn else ""
                         self._ctn_per_plt = ctn_plt if ctn_plt else ""
 
@@ -144,14 +155,14 @@ class PageProductTable:
                         count_placeholder = item_code.count(chr)
                         if not count_placeholder:  # chr is not in the item_code
                             self._vendor_code = item_code
+                            self._item_color = " ".join((inline_color + " " + finish).split())
                             self.push_attributes()
                         else:
                             left = item_code.split(chr)[0]
                             right = item_code.split(chr)[-1]
 
-                            color_sublist = self.get_color_areas_with_conditions_sublist(self._subgroup)
+                            color_sublist = self.get_color_areas_with_conditions_sublist(self.description)
                             if len(color_sublist):
-                                print("this should not be here", len(color_sublist))
                                 code_color_list = self.get_code_color(color_sublist)
                             else:
                                 color_sublist = self.get_color_areas_no_conditions_sublist()
@@ -162,7 +173,7 @@ class PageProductTable:
                                 count_placeholder = len(str(ccode))  # treat all placeholders as having the same len (requirement)
                                 if len(str(ccode)) == count_placeholder:
                                     self._vendor_code = str(left) + str(ccode) + str(right)
-                                    self._item_color = item_color
+                                    self._item_color = " ".join((item_color + " " + inline_color + " " + finish).split())
                                     self.push_attributes()
 
                         # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
@@ -320,31 +331,66 @@ class PageProductTable:
         return color_sublist
 
     def find_units_per_package(self, packaging_selections):
-        """:return units per carton for the product in the current line """
-        u_p_c = None
+        """:return a tuple (pieces_per_carton, sf_per_carton, carton_per_pallet) for the product in the current line """
+        pc_ctn = None  # pieces per carton
         sf_ctn = None
         ctn_plt = None
-        upc_options = []
+        upp_options = [] # units per package options
 
         for selection in packaging_selections:
+            index_of_pc_per_ctn = None
             index_of_sf_per_ctn = None
             index_of_ctn_per_plt = None
             for packaging_line in selection.pdf_line_list:
+                if 'Pcs/Ctn' in packaging_line._tabula_line:
+                    index_of_pc_per_ctn = packaging_line._tabula_line.index('Pcs/Ctn')
                 if 'Sf/Ctn' in packaging_line._tabula_line:
                     index_of_sf_per_ctn = packaging_line._tabula_line.index('Sf/Ctn')
                 if 'Ctn/Plt' in packaging_line._tabula_line:
                     index_of_ctn_per_plt = packaging_line._tabula_line.index('Ctn/Plt')
-                indexes = (index_of_sf_per_ctn, index_of_ctn_per_plt)
-                label_upc_sfctn_ctnplt = packaging_line.labeled_units_per_package(self._subgroup, self._item_size,
-                                                                                  indexes)
-                upc_options.append(label_upc_sfctn_ctnplt)
-        if upc_options:
-            upc_options.reverse() # in case old and new info is presented, will grab the last one
-            upc_options.sort(reverse=True, key=lambda item: item[0])
+                indexes = (index_of_pc_per_ctn, index_of_sf_per_ctn, index_of_ctn_per_plt)
+                label_pcctn_sfctn_ctnplt = packaging_line.labeled_units_per_package(self.description, self._item_size,
+                                                                                    indexes)
+                upp_options.append(label_pcctn_sfctn_ctnplt)
+        if upp_options:
+            upp_options.reverse() # in case old and new info is presented, will grab the last one
+            upp_options.sort(reverse=True, key=lambda item: item[0])
 
-            print("upc_options", upc_options)
+            # print("upp_options", upp_options)
 
-            u_p_c = upc_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
-            sf_ctn = upc_options[0][2]
-            ctn_plt = upc_options[0][3]
-        return (u_p_c, sf_ctn, ctn_plt)
+            pc_ctn = upp_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
+            sf_ctn = upp_options[0][2]
+            ctn_plt = upp_options[0][3]
+        return (pc_ctn, sf_ctn, ctn_plt)
+
+
+
+    def config_row_number(self, itemname):
+        """ @:returns row number of TARGET_CONFIG.csv
+            @:param itemname is the name to look for in th names column of the TARGET_CONFIG.csv"""
+        # print("itemname", itemname)
+        row_n = None
+        missing_name = ""
+        for i in range(len(self._config["NAMES"])):
+            name_list = self._config["NAMES"][i].split(sep=',')
+            for name in name_list:
+                if name in itemname.upper():
+                    row_n = i
+                missing_name = name
+        # print("missing_name", missing_name)
+        return row_n
+
+    def find_finish_inline_color(self, description_splitted):
+        finish = ''
+        inline_color = ''
+        if len(description_splitted) == 2:
+            description_splitted = description_splitted[-1].split('-', maxsplit=1)
+            if len(description_splitted) == 2:
+                inline_color = description_splitted[0]
+                finish = description_splitted[-1]
+            else:
+                finish = description_splitted[-1]
+        return (finish, inline_color)
+
+
+

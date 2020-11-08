@@ -1,4 +1,5 @@
-HEADER = ["externalid",
+HEADER = ["_pagenumber",
+          "externalid",
           "itemId",
           "displayname",
           "Item Name",

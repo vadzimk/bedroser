@@ -19,9 +19,9 @@ PRODUCT_TABLE_FIELDS = [
     "_vendor_code",
     "_subgroup",
     "_item_color",
-    "_units_per_carton",
     "_units_of_measure",
     "_unit_price",
+    "_pieces_per_carton",
     "_sf_per_ctn",
     "_ctn_per_plt"
 ]
