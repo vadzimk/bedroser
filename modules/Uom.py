@@ -46,7 +46,11 @@ class Uom:
                 if "BOXES" in uom_set and "SQUARE FEET" in uom_set:
                     if u_singular == "BOX":
                         base_unit = "No"
-                        conversion_rate = target_obj._dictionary["salesdescription"][i].split()[0]
+                        #
+                        if target_obj._dictionary["salesdescription"][i]:
+                            packaging_string_list = target_obj._dictionary["salesdescription"][i].split('S', maxsplit=1)
+                            if len(packaging_string_list) ==2:
+                                conversion_rate = str(packaging_string_list[0]).strip().split()[-1]
 
                 self._dictionary["Conversion Rate(/Base)"].append(conversion_rate)
 
