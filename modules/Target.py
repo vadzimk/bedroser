@@ -1,6 +1,7 @@
 from modules import PDF_CONST as PFC
 from decimal import Decimal
 
+
 # import inflect
 # plur = inflect.engine()
 
@@ -29,7 +30,7 @@ class Target:
             self._dictionary["itemId"].append(externalid)
 
             item_name = source_d["_series_name"][i] + " " + source_d["_group"][i] + " " + source_d["_subgroup"][i]
-            item_name = " ".join(item_name.split())  #remove double spaces
+            item_name = " ".join(item_name.split())  # remove double spaces
             self._dictionary["Item Name"].append(item_name)
 
             config_row_n = self.config_row_number(item_name)  # row number of TARGET_CONFIG
@@ -72,13 +73,11 @@ class Target:
             if pieces_per_carton:
                 sales_description += str(pieces_per_carton) + " EA/BX "
             if sf_per_carton:
-                sales_description += str(sf_per_carton) + " SF/BX "
+                sales_description += str(Decimal(sf_per_carton).normalize()) + " SF/BX "
             if ctn_per_plt:
                 sales_description += str(ctn_per_plt) + " BX/PLT"
 
-
             self._dictionary["salesdescription"].append(" ".join(sales_description.split()))
-
 
             # "Pcs in a Box",
             # "SQFT BY PCS/SHEET",
@@ -101,10 +100,9 @@ class Target:
                 self._dictionary["SQFT BY BOX"].append("")
 
             Sales_QTY_Per_Pack_Unit = 1
-            if sales_packaging_unit == "BOX":
+            if sales_packaging_unit == "BOX" and pieces_per_carton:
                 Sales_QTY_Per_Pack_Unit = pieces_per_carton
-            self._dictionary["Sales QTY Per Pack Unit"].append(pieces_per_carton)
-
+            self._dictionary["Sales QTY Per Pack Unit"].append(Sales_QTY_Per_Pack_Unit)
 
             number_string = source_d["_unit_price"][i]
             unit_price = Decimal(number_string.replace(',', ''))

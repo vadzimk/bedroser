@@ -83,7 +83,7 @@ class PdfLine:
             group_name = None
 
         if group_name:
-            group_name = " ".join(str(group_name).replace('*','').split())
+            group_name = " ".join(str(group_name).replace('*', '').split())
 
         return group_name
 
@@ -127,7 +127,7 @@ class PdfLine:
             if self._line_len == 5 and self._num_blanks == 1:
                 item_size = item_size.split()[0]
         if item_size:
-            item_size = re.sub('^\.', '', item_size) # fix occasional '.5x12.5' on p 68
+            item_size = re.sub('^\.', '', item_size)  # fix occasional '.5x12.5' on p 68
         return item_size
 
     # def contains_vendor_code(self):
@@ -190,7 +190,6 @@ class PdfLine:
         #     print("size:", size_arr)
         #     print(self._tabula_line)
 
-
         p_pc = None
         sf_ctn = None
         ctn_plt = None
@@ -200,7 +199,7 @@ class PdfLine:
             # https://stackoverflow.com/questions/4998629/split-string-with-multiple-delimiters-in-python
             # https://docs.python.org/3/library/re.html
             s = str(self._tabula_line[0]).strip()
-            pack_info = re.split('\s|[\-](?!\d)', s) # split if \s or \- not followed by a digit
+            pack_info = re.split('\s|[\-](?!\d)', s)  # split if \s or \- not followed by a digit
             packaging_info_set = set(pack_info)
             for p_item in packaging_info_set:
                 p_item = str(p_item).lower()
@@ -213,8 +212,9 @@ class PdfLine:
 
                 for s_item in size_arr:
                     s_item = str(s_item).lower()
-                    if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item) or dim_roughly_equals(fract_dim_to_float_dim(s_item), p_item):
-                        label += 2 # weight of the label is greater for size info
+                    if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item) or dim_roughly_equals(
+                            fract_dim_to_float_dim(s_item), p_item):
+                        label += 2  # weight of the label is greater for size info
                     # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item), dim_roughly_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
@@ -251,6 +251,13 @@ class PdfLine:
         if self._line_len == 5 and self._num_blanks >= 3:
             is_gr_prefx = True
         return is_gr_prefx
+
+    def find_origin(self, index):
+        origin = None
+        if not index == None:
+            origin = str(self._tabula_line[index]).replace('*', '')
+
+        return origin
 
     # def is_color_table_header(self):
     #     is_header = False

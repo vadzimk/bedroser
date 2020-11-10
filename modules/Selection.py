@@ -1,4 +1,5 @@
 from modules.PdfLine import PdfLine
+from modules.PdfLineSE import PdfLineSE
 from modules.func import *
 from modules import PDF_CONST as PFC
 from modules.ColorArea import ColorArea
@@ -9,11 +10,15 @@ from pprint import pprint
 class Selection:
     """ Represents area of selection on the page """
 
-    def __init__(self, df):
+    def __init__(self, df, is_se):
         self.selection_as_line_list = convert_dataframe_tolist_of_lines(df)
         self.selection_as_dict = df.to_dict()
         self.type = None  # title_area, color_area, stock_area, packaging_area
-        self.pdf_line_list = [PdfLine(line) for line in self.selection_as_line_list]
+        if is_se:
+            # page is from Sequel encore catalog
+            self.pdf_line_list = [PdfLineSE(line) for line in self.selection_as_line_list]
+        else:
+            self.pdf_line_list = [PdfLine(line) for line in self.selection_as_line_list]
 
     def set_type(self, the_type=None):
         if the_type:

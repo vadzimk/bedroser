@@ -139,6 +139,8 @@ def read_to_dict(source_path):
         print(f"Not found: {source_path}")
 
     return source_dict
+
+
 #
 #
 # def export_dict(dictionary, filename):
@@ -272,10 +274,52 @@ def dim_roughly_equals(dim1, dim2):
     left2, x, right2 = dim2.rpartition('x')
     res = False
     try:
-        res = math.ceil(float(left1)) == math.ceil(float(left2)) and math.ceil(float(right1)) == math.ceil(float(right2))
+        res = math.ceil(float(left1)) == math.ceil(float(left2)) and math.ceil(float(right1)) == math.ceil(
+            float(right2))
     except ValueError:
         None
 
     return res
 
 
+def ask_for_se_range(page_start, numpages_to_process):
+    """ :return a tuple (first, last) page numbers of Sequel Encore catalog
+    :param answer string representatino of user input of page range"""
+    first = None
+    last = None
+
+    answer = input(f"Enter the first and last page number of SEQUEL ENCORE (first last): ")
+    answer = answer.split()
+    while not is_valid_se_range(answer, page_start, numpages_to_process):
+        print(f"Invalid range")
+        answer = input(f"Enter the first and last page number of SEQUEL ENCORE (first last): ")
+        answer = answer.split()
+    first = int(answer[0])
+    last = int(answer[1])
+    return (first, last)
+
+
+def is_valid_se_range(answer, p_start, n_pages_to_process):
+    """
+    :param p_start: star page number to process in the file
+    :return true if answer to Sequel Encore page range was entered as whole numbers in the
+    :param answer is a list of strings """
+    is_valid = True
+
+    if not len(answer) == 2:
+        is_valid = False
+    else:
+        try:
+            first = int(answer[0])
+            if first < p_start or first > p_start + n_pages_to_process - 1:
+                is_valid = False
+            second = int(answer[1])
+            if second < p_start or second > p_start + n_pages_to_process - 1:
+                is_valid = False
+
+            if second < first:
+                is_valid = False
+        except ValueError:
+            is_valid = False
+
+    return is_valid

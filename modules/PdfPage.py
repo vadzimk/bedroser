@@ -13,10 +13,11 @@ from pprint import pprint
 class PdfPage:
     """ converts Pdf page to csv, creates a list of PdfLine objects for each line and passes it to PdfProductTable and PdfColorTable"""
 
-    def __init__(self, infilename, config_d, pagenumber, coordinates):
+    def __init__(self, infilename, config_d, pagenumber, se_range, coordinates):
         self.infilename = infilename
         self.config_d = config_d
         self.pagenumber = pagenumber
+        self.is_se = self.is_in_se_range(se_range, pagenumber)
         self.coordinates = coordinates
         print("page:", self.pagenumber)  # print page number while creating
         self.midfilename = '{}tabulated_{}.csv'.format(PR.DIR_TABULATED_CSV, self.pagenumber)
@@ -45,8 +46,6 @@ class PdfPage:
 
         # #  represent selections as lists of lines
         # self.selections_as_line_lists = self.convert_list_of_dataframes_to_selection_lines(self.selection_dataframes)
-
-
 
         # self._contains_color_table = self.contains_color_table()
 
@@ -96,8 +95,11 @@ class PdfPage:
         # if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
 
         # was passed selected_areas=self.selections_as_line_lists
-        self.product_table = PageProductTable(conf_d=self.config_d, page_number=self.pagenumber,
-                                              selection_dfs=self.selection_dataframes)
+        self.product_table = PageProductTable(
+            conf_d=self.config_d,
+            page_number=self.pagenumber,
+            is_se=self.is_se,
+            selection_dfs=self.selection_dataframes)
         # else:  # page doesn't contin color info in itself
         #     self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
         #                                            external_color_list)
@@ -135,7 +137,7 @@ class PdfPage:
 
                 dict_list.append(df)
             except IndexError:
-                print(f"No selections on page {pagenumber}" )
+                print(f"No selections on page {pagenumber}")
         return dict_list
 
     def convert_dataframe_tolist_of_lines(self, df):
@@ -174,4 +176,9 @@ class PdfPage:
         # print(selectios_)
         return selectios_
 
-
+    def is_in_se_range(self, se_range, pagenumber):
+        s1, s2 = se_range
+        is_se = False
+        if s1 and s2:  # are not None
+            is_se = True if pagenumber in range(*se_range) else False
+        return is_se

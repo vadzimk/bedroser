@@ -43,6 +43,12 @@ def main():
 
     print(f"Chosen number of pages to process: {n_pages_to_process}")
 
+    se_page_range = (None, None)
+    has_se = input("Is SEQUEL ENCORE in this page range? (y/n): ")
+    if has_se.lower() == 'y':
+        se_page_range = ask_for_se_range(page_start, n_pages_to_process)
+
+
     print(f"Working on {infilename}\nPlease wait....")
     start_time = time.time()
 
@@ -54,7 +60,8 @@ def main():
     price_list = PdfDoc(in_file_name=infilename,
                         config_dict=config_dictionary,
                         page_start=page_start,
-                        n_pages=n_pages_to_process)
+                        n_pages=n_pages_to_process,
+                        se_range=se_page_range)
 
     print(f"Reading pages:")
     price_list.create_pages()

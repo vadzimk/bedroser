@@ -12,15 +12,15 @@ import csv
 from pprint import pprint
 
 
-
 class PageProductTable:
     """ contains products in a dictionary """
 
-    def __init__(self, conf_d, page_number, selection_dfs):
+    def __init__(self, conf_d, page_number, is_se, selection_dfs):
         self._pagenumber = page_number
-        self._config = conf_d # config dict from TARGET_CONFIG.csv
+        self.is_se = is_se
+        self._config = conf_d  # config dict from TARGET_CONFIG.csv
         self._selection_dfs = selection_dfs
-        self.selection_objects = [Selection(df) for df in selection_dfs]
+        self.selection_objects = [Selection(df, self.is_se) for df in selection_dfs]
         self.set_selection_types()  # init selection types
 
         # self.lines = lines
@@ -53,6 +53,7 @@ class PageProductTable:
         self._unit_price = None
         self._sf_per_ctn = None
         self._ctn_per_plt = None
+        self._origin = None
 
         # supplemental properties
         self.color_areas = []  # contains Color_area objects that are pushed as the build_table is running
@@ -66,7 +67,6 @@ class PageProductTable:
 
         self.group_prefix = ''  # represents category prefix of subgroup
         self.contains_panel = False
-
 
         # print("num pack sel", len(self.packaging_selections))
 
@@ -83,6 +83,7 @@ class PageProductTable:
     def build_table(self, ext_pckg=None, ext_series=None):
         # put products in the dictionary
         print("build_table:")
+        origin_index = None
 
         for area in self.selection_objects:
             print(area)
@@ -114,15 +115,24 @@ class PageProductTable:
             elif area.type == PFC.TYPE_STOCK:
                 self.reset_color_areas = True
                 for line in area.pdf_line_list:
-                    if line._is_product_table_row:
+                    if not line._is_product_table_row:
+                        print("line._tabula_line", line._tabula_line)
+                        if 'Origin' in line._tabula_line:
+                            origin_index = line._tabula_line.index('Origin')
+                    elif line._is_product_table_row:
+                        self._origin = line.find_origin(origin_index)
+                        print("origin_index", origin_index)
+                        print("self._origin", self._origin)
+
                         self.description = line.find_subgroup() if line.find_subgroup() else self.description
                         description_splitted = re.split('-', self.description, maxsplit=1)
-                        self._subgroup = description_splitted[0].strip()
-
-                        print("self._subgroup", self._subgroup)
                         inline_color = ''
                         (finish, inline_color) = self.find_finish_inline_color(description_splitted)
                         print("finish, inline color", (finish, inline_color))
+                        self._subgroup = " ".join((description_splitted[0].strip() + " " + finish).split())
+
+                        print("self._subgroup", self._subgroup)
+
 
                         if self.description and (self.group_prefix in self.description):
                             # do not join prefix
@@ -146,16 +156,16 @@ class PageProductTable:
                                 pack_selecions = ext_pckg
                         (pc_ctn, sf_ctn, ctn_plt) = self.find_units_per_package(pack_selecions)
 
-                        self._pieces_per_carton = pc_ctn if pc_ctn else self._pieces_per_carton
-                        self._sf_per_ctn = sf_ctn if sf_ctn else ""
-                        self._ctn_per_plt = ctn_plt if ctn_plt else ""
+                        self._pieces_per_carton = pc_ctn if (pc_ctn and not str(pc_ctn) == '-') else ""
+                        self._sf_per_ctn = sf_ctn if (sf_ctn and not str(sf_ctn) == '-') else ""
+                        self._ctn_per_plt = ctn_plt if (ctn_plt and not str(ctn_plt) == '-') else ""
 
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
                         chr = u'\u25CF'
                         count_placeholder = item_code.count(chr)
                         if not count_placeholder:  # chr is not in the item_code
                             self._vendor_code = item_code
-                            self._item_color = " ".join((inline_color + " " + finish).split())
+                            self._item_color = " ".join((inline_color).split())
                             self.push_attributes()
                         else:
                             left = item_code.split(chr)[0]
@@ -170,16 +180,16 @@ class PageProductTable:
 
                             for (ccode, item_color) in code_color_list:
                                 # comment out line below if need to differentiate b/w len of placeholder
-                                count_placeholder = len(str(ccode))  # treat all placeholders as having the same len (requirement)
+                                count_placeholder = len(
+                                    str(ccode))  # treat all placeholders as having the same len (requirement)
                                 if len(str(ccode)) == count_placeholder:
                                     self._vendor_code = str(left) + str(ccode) + str(right)
-                                    self._item_color = " ".join((item_color + " " + inline_color + " " + finish).split())
+                                    self._item_color = " ".join(
+                                        (item_color + " " + inline_color).split())
                                     self.push_attributes()
 
                         # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
                         #
-
-
 
         # print("Attributes:")
         # print(self._series_name)
@@ -190,54 +200,7 @@ class PageProductTable:
         # print(self._unit_price)
         # print(self._units_per_carton)
 
-        # for item in area.selection_as_dict.keys():
-        #     if
 
-
-
-        """ sees what fields are detected by the PdfLine and builds product table"""
-        # for line in self.lines:  # line comes form fixed column recognition
-        #
-        #     """not TODO skip lines that are not valid, check if line is guessed list if so than it is valid, """
-        #     cur_line_string = self.join_list_items(line._tabula_line)
-        #     valid_line = False
-        #     # for item in self.guessed_rows_strings:
-        #     #     if item in cur_line_string:
-        #     #         valid_line = True
-        #     if cur_line_string in self.guessed_rows_strings or (
-        #             'Units' in cur_line_string and 'Price' in cur_line_string):
-        #         valid_line = True
-        #
-        #     if valid_line:  # line matches the auto guessed row
-        #         """collect the fields"""
-        #         self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
-        #         self._group = line.find_group() if line.find_group() else self._group
-        #         self._subgroup = line.find_subgroup() if line.find_subgroup() else self._subgroup
-        #         self._vendor_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
-        #         self._item_size = line.find_item_size() if line.find_item_size() else self._item_size
-        #         self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
-        #         self._units_per_carton = line.find_units_per_carton() if line.find_units_per_carton() else self._units_per_carton
-        #         self._units_of_measure = line.find_units_of_measure() if line.find_units_of_measure() else self._units_of_measure
-        #         self._unit_price = line.find_unit_price() if line.find_unit_price() else self._unit_price
-        #
-        #         multiplier = 1  # number of times the row must be multiplied
-        #         if self.colors:  # if color list is present, a product row will be appended the number of colors times
-        #             multiplier = len(self.colors)
-
-        #         if line._is_product_table_row and self._series_name:
-        #             # print("is_product_table_row: ", line._is_product_table_row)
-        #             # print("_series_name", self._series_name)
-        #
-        #             """push properties to the dictionary"""
-        #             for i in range(multiplier):
-        #                 for key in PFC.PRODUCT_TABLE_FIELDS:
-        #                     if self.colors and key == "_item_color":
-        #                         value = self.colors[i]
-        #                     else:
-        #                         value = eval("self.%s" % (key))  # line at key
-        #                     self.__products[key].append(value)
-        #
-        #     # print(valid_line, cur_line_string)
 
     def get_products(self):
         """@:returns the dictionary of products representing product table of the page"""
@@ -335,7 +298,7 @@ class PageProductTable:
         pc_ctn = None  # pieces per carton
         sf_ctn = None
         ctn_plt = None
-        upp_options = [] # units per package options
+        upp_options = []  # units per package options
 
         for selection in packaging_selections:
             index_of_pc_per_ctn = None
@@ -353,7 +316,7 @@ class PageProductTable:
                                                                                     indexes)
                 upp_options.append(label_pcctn_sfctn_ctnplt)
         if upp_options:
-            upp_options.reverse() # in case old and new info is presented, will grab the last one
+            upp_options.reverse()  # in case old and new info is presented, will grab the last one
             upp_options.sort(reverse=True, key=lambda item: item[0])
 
             # print("upp_options", upp_options)
@@ -362,8 +325,6 @@ class PageProductTable:
             sf_ctn = upp_options[0][2]
             ctn_plt = upp_options[0][3]
         return (pc_ctn, sf_ctn, ctn_plt)
-
-
 
     def config_row_number(self, itemname):
         """ @:returns row number of TARGET_CONFIG.csv
@@ -391,6 +352,3 @@ class PageProductTable:
             else:
                 finish = description_splitted[-1]
         return (finish, inline_color)
-
-
-

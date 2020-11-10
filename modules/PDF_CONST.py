@@ -23,7 +23,8 @@ PRODUCT_TABLE_FIELDS = [
     "_unit_price",
     "_pieces_per_carton",
     "_sf_per_ctn",
-    "_ctn_per_plt"
+    "_ctn_per_plt",
+    "_origin"
 ]
 
 
