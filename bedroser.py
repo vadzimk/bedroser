@@ -44,7 +44,13 @@ def main():
     print(f"Chosen number of pages to process: {n_pages_to_process}")
 
     se_page_range = (None, None)
+
     has_se = input("Is SEQUEL ENCORE in this page range? (y/n): ")
+
+    while not (has_se.lower() == 'y' or has_se.lower() == 'n'):
+        print(f"Invalid answer")
+        has_se = input("Is SEQUEL ENCORE in this page range? (y/n): ")
+
     if has_se.lower() == 'y':
         se_page_range = ask_for_se_range(page_start, n_pages_to_process)
 
@@ -56,8 +62,11 @@ def main():
     # # print(f"Html files created...\nCreating product tables. Please wait...")
 
     config_dictionary = read_to_dict(PR.TARGET_CONFIG)
+    pickle_db = 'pickle_db'
+    pickled_d = import_selection_dataframes(pickle_db)
 
     price_list = PdfDoc(in_file_name=infilename,
+                        pickled_data=pickled_d,
                         config_dict=config_dictionary,
                         page_start=page_start,
                         n_pages=n_pages_to_process,
@@ -78,6 +87,13 @@ def main():
     except PermissionError:
         print(f"Access to {PR.DOC_PRODUCT_TABLE} denied\nClose applications that might use it and try again")
         return
+
+
+    # ================== for debugging
+    dfs = price_list.collect_selection_dfs()
+    export_selection_dataframes(dfs, pickle_db)  # in file
+
+    # ======================
 
     end_time = time.time()
     hours, rem = divmod(end_time - start_time, 3600)

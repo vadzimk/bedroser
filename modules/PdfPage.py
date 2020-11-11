@@ -13,7 +13,7 @@ from pprint import pprint
 class PdfPage:
     """ converts Pdf page to csv, creates a list of PdfLine objects for each line and passes it to PdfProductTable and PdfColorTable"""
 
-    def __init__(self, infilename, config_d, pagenumber, se_range, coordinates):
+    def __init__(self, infilename, pickle_data, config_d, pagenumber, se_range, coordinates):
         self.infilename = infilename
         self.config_d = config_d
         self.pagenumber = pagenumber
@@ -24,7 +24,13 @@ class PdfPage:
         # read all rows of the current page in a list of lists
 
         # passed to the PageProductTable
-        self.selection_dataframes = self.read_with_json_tabula(self.infilename, self.pagenumber, self.coordinates)
+        pickled_dfs = self.read_pickled_data(pickle_data)
+        if pickled_dfs:
+            self.selection_dataframes = pickled_dfs
+            print("pickled_df------s", pickled_dfs)
+        else:
+            # print("no data")
+            self.selection_dataframes = self.read_with_json_tabula(self.infilename, self.pagenumber, self.coordinates)
 
         # # would work if tables were recognized with proper header but there are plenty of small tables each with its own tiltle
         # self.selection_dicts = self.convert_list_of_dataframes_to_list_of_dict(self.selection_dataframes)
@@ -180,5 +186,17 @@ class PdfPage:
         s1, s2 = se_range
         is_se = False
         if s1 and s2:  # are not None
-            is_se = True if pagenumber in range(*se_range) else False
+            is_se = pagenumber in range(s1, s2+1)
         return is_se
+
+
+    def read_pickled_data(self, pickled):
+        """ :param pickled a list of dictionaries {pagenumber: list_of_selections} or an empty list
+        :return list of dataframes representing all selections on the current page"""
+        return pickled.get(self.pagenumber)
+
+
+
+
+
+

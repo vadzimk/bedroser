@@ -8,6 +8,7 @@ import modules.PDF_CONST as PFC
 from modules import PROJ_CONST as PR
 from modules.PdfLine import PdfLine
 from modules.Selection import Selection
+from modules.SelectionSE import SelectionSE
 import csv
 from pprint import pprint
 
@@ -20,7 +21,10 @@ class PageProductTable:
         self.is_se = is_se
         self._config = conf_d  # config dict from TARGET_CONFIG.csv
         self._selection_dfs = selection_dfs
-        self.selection_objects = [Selection(df, self.is_se) for df in selection_dfs]
+        if is_se:
+            self.selection_objects = [SelectionSE(df, self.is_se, conf_d) for df in selection_dfs]
+        else:
+            self.selection_objects = [Selection(df, self.is_se) for df in selection_dfs]
         self.set_selection_types()  # init selection types
 
         # self.lines = lines
@@ -89,13 +93,18 @@ class PageProductTable:
             print(area)
 
             if area.type == PFC.TYPE_TITLE:
-                for line in area.pdf_line_list:
-                    self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
-                    for item in line._tabula_line:
-                        if 'Panel' in item:
-                            self.contains_panel = True
-                if not self._series_name:
-                    self._series_name = area.pdf_line_list[0]._tabula_line[0]
+                if not self.is_se:
+                    for line in area.pdf_line_list:
+                        self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
+                        for item in line._tabula_line:
+                            if 'Panel' in item:
+                                self.contains_panel = True
+                    if not self._series_name:
+                        self._series_name = area.pdf_line_list[0]._tabula_line[0]
+                else:  # is_se Sequel Encore
+                    for line in area.pdf_line_list:
+                        self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
+                        self._group = line.find_group() if line.find_group() else self._group
 
 
             elif area.type == PFC.TYPE_CATEG and area.selection_as_line_list[0][0]:
@@ -108,9 +117,12 @@ class PageProductTable:
                     for a in self.color_areas:
                         a.used = True
                     self.reset_color_areas = False
-
                 color_area_obj = area.color_area()
                 self.color_areas.append(color_area_obj)
+
+                if self.is_se:
+                    color = area.selection_as_line_list[0][0]
+                    self._item_color = color if color else self._item_color
 
             elif area.type == PFC.TYPE_STOCK:
                 self.reset_color_areas = True
@@ -133,12 +145,12 @@ class PageProductTable:
 
                         print("self._subgroup", self._subgroup)
 
-
                         if self.description and (self.group_prefix in self.description):
                             # do not join prefix
                             self.group_prefix = ''
-
-                        g_name = self.group_prefix + line.find_group() if line.find_group() else self.group_prefix.strip()
+                        g_name = None
+                        if not self.is_se:
+                            g_name = self.group_prefix + line.find_group() if line.find_group() else self.group_prefix.strip()
                         self._group = g_name if g_name else self._group
                         if not self._group and self.contains_panel:
                             self._group = 'Panel'
@@ -151,7 +163,7 @@ class PageProductTable:
 
                         # extract packaging data for the item in STOCK area
                         pack_selecions = self.packaging_selections
-                        if not pack_selecions:
+                        if not pack_selecions and ext_series:
                             if str(ext_series).lower() == str(self._series_name).lower():
                                 pack_selecions = ext_pckg
                         (pc_ctn, sf_ctn, ctn_plt) = self.find_units_per_package(pack_selecions)
@@ -165,8 +177,10 @@ class PageProductTable:
                         count_placeholder = item_code.count(chr)
                         if not count_placeholder:  # chr is not in the item_code
                             self._vendor_code = item_code
-                            self._item_color = " ".join((inline_color).split())
+                            if not self.is_se:
+                                self._item_color = " ".join((inline_color).split())
                             self.push_attributes()
+
                         else:
                             left = item_code.split(chr)[0]
                             right = item_code.split(chr)[-1]
@@ -200,8 +214,6 @@ class PageProductTable:
         # print(self._unit_price)
         # print(self._units_per_carton)
 
-
-
     def get_products(self):
         """@:returns the dictionary of products representing product table of the page"""
         return self.__products
@@ -224,7 +236,15 @@ class PageProductTable:
     def set_selection_types(self):
         try:
             # initialize selection's type:
-            self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
+            if not self.is_se:
+                self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
+            else:
+                self.selection_objects[0].set_type(PFC.TYPE_CATEG)
+                for line in self.selection_objects[0].selection_as_line_list:
+                    for item in line:
+                        if "Sequel" in item:
+                            self.selection_objects[0].set_type(PFC.TYPE_TITLE)
+                            break
             # set remaining areas
             for i in range(1, len(self.selection_objects)):
                 self.selection_objects[i].set_type()
@@ -325,21 +345,6 @@ class PageProductTable:
             sf_ctn = upp_options[0][2]
             ctn_plt = upp_options[0][3]
         return (pc_ctn, sf_ctn, ctn_plt)
-
-    def config_row_number(self, itemname):
-        """ @:returns row number of TARGET_CONFIG.csv
-            @:param itemname is the name to look for in th names column of the TARGET_CONFIG.csv"""
-        # print("itemname", itemname)
-        row_n = None
-        missing_name = ""
-        for i in range(len(self._config["NAMES"])):
-            name_list = self._config["NAMES"][i].split(sep=',')
-            for name in name_list:
-                if name in itemname.upper():
-                    row_n = i
-                missing_name = name
-        # print("missing_name", missing_name)
-        return row_n
 
     def find_finish_inline_color(self, description_splitted):
         finish = ''

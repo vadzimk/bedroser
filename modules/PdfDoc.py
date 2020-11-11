@@ -8,8 +8,9 @@ from modules.func import *
 class PdfDoc:
     """ manages a list of PdfPage objects"""
 
-    def __init__(self, in_file_name, config_dict, se_range, page_start=1, n_pages=1):
+    def __init__(self, in_file_name, pickled_data, config_dict, se_range, page_start=1, n_pages=1):
         """by default grabs the first page only"""
+        self.pickled = pickled_data
         self.config_dict = config_dict
         self.se_range = se_range
         self.page_start = page_start
@@ -25,6 +26,7 @@ class PdfDoc:
 
     def create_pages(self):
         _pages = [PdfPage(infilename=self.in_file_name,
+                          pickle_data=self.pickled,
                           config_d=self.config_dict,
                           pagenumber=i,
                           se_range=self.se_range,
@@ -87,3 +89,10 @@ class PdfDoc:
     # #         if the_stack[i]._contains_color_table:
     # #             the_stack[i].create_product_table()
     # #         # else:
+
+    def collect_selection_dfs(self):
+        """ :return a dictionary {pagenumber: [df1, df2 ...]}"""
+        all_page_dfs = {}
+        for page in self._pages:
+            all_page_dfs[page.pagenumber] = page.selection_dataframes
+        return all_page_dfs

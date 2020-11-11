@@ -25,3 +25,5 @@ tests.py
 xpdf/
 project/*
 pdfinfo/
+
+pickle_db

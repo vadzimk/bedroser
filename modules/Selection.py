@@ -1,5 +1,5 @@
 from modules.PdfLine import PdfLine
-from modules.PdfLineSE import PdfLineSE
+
 from modules.func import *
 from modules import PDF_CONST as PFC
 from modules.ColorArea import ColorArea
@@ -11,22 +11,21 @@ class Selection:
     """ Represents area of selection on the page """
 
     def __init__(self, df, is_se):
+        self.is_se = is_se
         self.selection_as_line_list = convert_dataframe_tolist_of_lines(df)
         self.selection_as_dict = df.to_dict()
         self.type = None  # title_area, color_area, stock_area, packaging_area
-        if is_se:
-            # page is from Sequel encore catalog
-            self.pdf_line_list = [PdfLineSE(line) for line in self.selection_as_line_list]
-        else:
+        self.pdf_line_list = None
+        if not is_se:
             self.pdf_line_list = [PdfLine(line) for line in self.selection_as_line_list]
 
     def set_type(self, the_type=None):
         if the_type:
             self.type = the_type
-        elif self.is_categ_area():
-            self.type = PFC.TYPE_CATEG
         elif self.is_color_area():
             self.type = PFC.TYPE_COLOR
+        elif self.is_categ_area():
+            self.type = PFC.TYPE_CATEG
         elif self.is_stock_area():
             self.type = PFC.TYPE_STOCK
         elif self.is_packaging_area():
@@ -34,17 +33,13 @@ class Selection:
         else:
             self.type = None
 
-
     def is_categ_area(self):
         is_categ = True
         for line in self.selection_as_line_list:
-            if len(line)>1:
+            if len(line) > 1:
                 is_categ = False
                 break
         return is_categ
-
-
-
 
     def is_color_area(self):
         """ :return true if this is a color area """

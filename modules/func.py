@@ -1,6 +1,8 @@
+import copy
 import json
 import math
 import os
+import pickle
 from fractions import Fraction
 from pathlib import Path
 import shutil
@@ -323,3 +325,49 @@ def is_valid_se_range(answer, p_start, n_pages_to_process):
             is_valid = False
 
     return is_valid
+
+
+def config_row_number(itemname, _config):
+    """ @:returns row number of TARGET_CONFIG.csv
+        @:param itemname is the name to look for in th names column of the TARGET_CONFIG.csv"""
+    # print("itemname", itemname)
+    row_n = None
+    missing_name = ""
+    for i in range(len(_config["NAMES"])):
+        name_list = _config["NAMES"][i].split(sep=',')
+        for name in name_list:
+            if name in itemname.upper():
+                row_n = i
+            missing_name = name
+    # print("missing_name", missing_name)
+    return row_n
+
+
+def export_selection_dataframes(dfs, filename):
+    """ :param dfs: a dictionary {pagenumber: [df1, df2 ...]}"""
+    try:
+        print(f'Writing file "{filename}"...', end='')
+        with open(filename, 'ab') as out_file_pickled:  # OPEN file TO WRITE BYTES
+            pickle.dump(dfs, out_file_pickled)
+            print('done!')
+    except:
+        print('error from pickle_dict')
+
+def import_selection_dataframes(filename):
+    """ :return a list of dictionaries {pagenumber: list_of_selections} or an empty list """
+    objs = []
+
+    if os.path.exists(filename):
+        with open(filename, 'rb') as pickle_file:
+            while True:
+                try:
+                    objs.append(pickle.load(pickle_file))
+                except EOFError:
+                    break
+    print("objs", objs)
+    res_dict = {}
+    for d in objs:
+        z = copy.deepcopy(d)
+        res_dict.update(z)
+
+    return res_dict

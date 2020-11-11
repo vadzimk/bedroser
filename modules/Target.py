@@ -1,5 +1,6 @@
 from modules import PDF_CONST as PFC
 from decimal import Decimal
+from modules.func import config_row_number
 
 
 # import inflect
@@ -33,7 +34,7 @@ class Target:
             item_name = " ".join(item_name.split())  # remove double spaces
             self._dictionary["Item Name"].append(item_name)
 
-            config_row_n = self.config_row_number(item_name)  # row number of TARGET_CONFIG
+            config_row_n = config_row_number(item_name, self._config)  # row number of TARGET_CONFIG
 
             item_number_and_name = externalid + " " + item_name
             self._dictionary["Item Number and Name"].append(item_number_and_name)
@@ -135,7 +136,7 @@ class Target:
             self._dictionary["subsidiary"].append(subsidiary)
 
             if config_row_n:
-                product_class = self._config["CLASS"][self.config_row_number(item_name)]  # field 24
+                product_class = self._config["CLASS"][config_row_number(item_name, self._config)]  # field 24
             else:
                 product_class = "100"
             self._dictionary["Class"].append(product_class)
@@ -174,17 +175,3 @@ class Target:
             sales_packaging_unit = self._config["PACK"][row_n]
         return sales_packaging_unit
 
-    def config_row_number(self, itemname):
-        """ @:returns row number of TARGET_CONFIG.csv
-            @:param itemname is the name to look for in th names column of the TARGET_CONFIG.csv"""
-        # print("itemname", itemname)
-        row_n = None
-        missing_name = ""
-        for i in range(len(self._config["NAMES"])):
-            name_list = self._config["NAMES"][i].split(sep=',')
-            for name in name_list:
-                if name in itemname.upper():
-                    row_n = i
-                missing_name = name
-        # print("missing_name", missing_name)
-        return row_n
