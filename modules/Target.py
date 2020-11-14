@@ -30,7 +30,10 @@ class Target:
             self._dictionary["externalid"].append(externalid)
             self._dictionary["itemId"].append(externalid)
 
-            item_name = source_d["_series_name"][i] + " " + source_d["_group"][i] + " " + source_d["_subgroup"][i]
+            item_name = source_d["_series_name"][i].upper() + " " + self.string_wo_duplicates(
+                source_d["_group"][i].upper(),
+                source_d["_subgroup"][i].upper())
+
             item_name = " ".join(item_name.split())  # remove double spaces
             self._dictionary["Item Name"].append(item_name)
 
@@ -50,7 +53,9 @@ class Target:
             item_color = source_d["_item_color"][i]
             self._dictionary["Item Color"].append(item_color)
 
-            displayname = item_name + " " + item_size + " " + item_color + " " + vendor_code
+            origin = source_d["_origin"][i]
+
+            displayname = item_name + " " + item_size + " " + item_color + " " + vendor_code + " " + origin
             displayname = " ".join(displayname.split())  # remove multiple spaces
             displayname = displayname.upper()
             self._dictionary["displayname"].append(displayname)
@@ -175,3 +180,11 @@ class Target:
             sales_packaging_unit = self._config["PACK"][row_n]
         return sales_packaging_unit
 
+    def string_wo_duplicates(self, s1, s2):
+        s_1 = s1.split()
+        s_2 = s2.split()
+
+        for item in s_2:
+            if item not in s_1:
+                s_1.append(item)
+        return " ".join(s_1)

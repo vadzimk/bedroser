@@ -46,7 +46,7 @@ class PageProductTable:
         self.__products = {key: [] for key in
                            PFC.PRODUCT_TABLE_FIELDS}  # dictionary that will hold the items of the table
         #  fields of the csv data frame:
-        self._series_name = None
+        self._series_name = 'Sequel Encore' if is_se else None
         self._group = None
         self._subgroup = None  # subgroup is like "BULLNOSE"
         self._vendor_code = None
@@ -93,57 +93,48 @@ class PageProductTable:
             print(area)
 
             if area.type == PFC.TYPE_TITLE:
-                if not self.is_se:
-                    for line in area.pdf_line_list:
-                        self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
-                        for item in line._tabula_line:
-                            if 'Panel' in item:
-                                self.contains_panel = True
-                    if not self._series_name:
-                        self._series_name = area.pdf_line_list[0]._tabula_line[0]
-                else:  # is_se Sequel Encore
-                    for line in area.pdf_line_list:
-                        self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
-                        self._group = line.find_group() if line.find_group() else self._group
+                self.process_title_area(area)
 
-
-            elif area.type == PFC.TYPE_CATEG and area.selection_as_line_list[0][0]:
-                self.group_prefix = area.selection_as_line_list[0][0] + ' '
-                print("group prefix", self.group_prefix)
+            elif area.type == PFC.TYPE_CATEG:
+                self.process_category_area(area)
 
             elif area.type == PFC.TYPE_COLOR:
-                if self.reset_color_areas:
-                    # gets True when Stock selection is encountered, the next color area encountered will set all color areas in self.color_areas used property to True and self.reset_color_areas back to False
-                    for a in self.color_areas:
-                        a.used = True
-                    self.reset_color_areas = False
-                color_area_obj = area.color_area()
-                self.color_areas.append(color_area_obj)
-
-                if self.is_se:
-                    color = area.selection_as_line_list[0][0]
-                    self._item_color = color if color else self._item_color
+                self.process_color_area(area)
 
             elif area.type == PFC.TYPE_STOCK:
                 self.reset_color_areas = True
                 for line in area.pdf_line_list:
                     if not line._is_product_table_row:
-                        print("line._tabula_line", line._tabula_line)
+                        # print("line._tabula_line", line._tabula_line)
                         if 'Origin' in line._tabula_line:
                             origin_index = line._tabula_line.index('Origin')
                     elif line._is_product_table_row:
                         self._origin = line.find_origin(origin_index)
-                        print("origin_index", origin_index)
-                        print("self._origin", self._origin)
 
                         self.description = line.find_subgroup() if line.find_subgroup() else self.description
-                        description_splitted = re.split('-', self.description, maxsplit=1)
-                        inline_color = ''
-                        (finish, inline_color) = self.find_finish_inline_color(description_splitted)
-                        print("finish, inline color", (finish, inline_color))
-                        self._subgroup = " ".join((description_splitted[0].strip() + " " + finish).split())
+                        # if not self.is_se:
+                        #     description_splitted = re.split('-', self.description, maxsplit=1)
+                        # else:
+                        #     description_splitted = [self.description]
+                        #
+                        # inline_color = ''
+                        # (finish, inline_color) = self.find_finish_inline_color(description_splitted)
+                        # if not inline_color and self.is_se:
+                        #     inline_color = self.find_slab_color(self.description)
+                        # print("finish, inline color", (finish, inline_color))
+                        #
+                        # self._subgroup = " ".join(
+                        #     (description_splitted[0].strip().replace(finish, '') + " " + finish).split())
+                        # # remove color from subgroup if it was duplicated
+                        # self._subgroup = self._subgroup.replace(inline_color, '').strip()
+                        self._subgroup = self.description
+                        self._subgroup = self._subgroup.replace(self._item_color, '').strip()
+                        self._subgroup = re.sub('^\-', '', self._subgroup).strip()
+                        self._subgroup = self._subgroup.replace('- ', ' ')
+                        self._subgroup = self._subgroup.replace(' - ', ' ')
+                        self._subgroup = " ".join(self._subgroup.split())
 
-                        print("self._subgroup", self._subgroup)
+                        # print("self._subgroup", self._subgroup)
 
                         if self.description and (self.group_prefix in self.description):
                             # do not join prefix
@@ -166,6 +157,8 @@ class PageProductTable:
                         if not pack_selecions and ext_series:
                             if str(ext_series).lower() == str(self._series_name).lower():
                                 pack_selecions = ext_pckg
+
+                        print(self._item_size, self.description)
                         (pc_ctn, sf_ctn, ctn_plt) = self.find_units_per_package(pack_selecions)
 
                         self._pieces_per_carton = pc_ctn if (pc_ctn and not str(pc_ctn) == '-') else ""
@@ -177,8 +170,7 @@ class PageProductTable:
                         count_placeholder = item_code.count(chr)
                         if not count_placeholder:  # chr is not in the item_code
                             self._vendor_code = item_code
-                            if not self.is_se:
-                                self._item_color = " ".join((inline_color).split())
+                            # self._item_color = inline_color if inline_color else self._item_color
                             self.push_attributes()
 
                         else:
@@ -198,13 +190,14 @@ class PageProductTable:
                                     str(ccode))  # treat all placeholders as having the same len (requirement)
                                 if len(str(ccode)) == count_placeholder:
                                     self._vendor_code = str(left) + str(ccode) + str(right)
-                                    self._item_color = " ".join(
-                                        (item_color + " " + inline_color).split())
+                                    self._item_color = item_color
+                                    # self._item_color = " ".join(
+                                    #     (item_color + " " + inline_color).split())
                                     self.push_attributes()
 
                         # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
                         #
-
+        #
         # print("Attributes:")
         # print(self._series_name)
         # print(self._group)
@@ -212,7 +205,6 @@ class PageProductTable:
         # print(self._item_size)
         # print(self._units_of_measure)
         # print(self._unit_price)
-        # print(self._units_per_carton)
 
     def get_products(self):
         """@:returns the dictionary of products representing product table of the page"""
@@ -240,11 +232,7 @@ class PageProductTable:
                 self.selection_objects[0].set_type(PFC.TYPE_TITLE)  # set the first area to title area
             else:
                 self.selection_objects[0].set_type(PFC.TYPE_CATEG)
-                for line in self.selection_objects[0].selection_as_line_list:
-                    for item in line:
-                        if "Sequel" in item:
-                            self.selection_objects[0].set_type(PFC.TYPE_TITLE)
-                            break
+
             # set remaining areas
             for i in range(1, len(self.selection_objects)):
                 self.selection_objects[i].set_type()
@@ -336,10 +324,10 @@ class PageProductTable:
                                                                                     indexes)
                 upp_options.append(label_pcctn_sfctn_ctnplt)
         if upp_options:
-            upp_options.reverse()  # in case old and new info is presented, will grab the last one
+            # upp_options.reverse()  # in case old and new info is presented, will grab the last one
             upp_options.sort(reverse=True, key=lambda item: item[0])
 
-            # print("upp_options", upp_options)
+            print("upp_options", upp_options)
 
             pc_ctn = upp_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
             sf_ctn = upp_options[0][2]
@@ -356,4 +344,52 @@ class PageProductTable:
                 finish = description_splitted[-1]
             else:
                 finish = description_splitted[-1]
-        return (finish, inline_color)
+        elif len(description_splitted) == 1:
+            description_splitted = description_splitted[-1].rsplit('-', 1)
+            if len(description_splitted) == 2:
+                finish = description_splitted[-1]
+
+        return (finish.strip(), inline_color.strip())
+
+    def process_title_area(self, area):
+        if not self.is_se:
+            for line in area.pdf_line_list:
+                self._series_name = line.find_series_name() if line.find_series_name() else self._series_name
+                for item in line._tabula_line:
+                    if 'Panel' in item:
+                        self.contains_panel = True
+            if not self._series_name:
+                self._series_name = area.pdf_line_list[0]._tabula_line[0]
+        else:  # is_se Sequel Encore
+            # handled in process_category_area
+            pass
+
+    def process_category_area(self, area):
+        if area.selection_as_line_list[0][0]:
+            self.group_prefix = area.selection_as_line_list[0][0] + ' '
+        for line in area.pdf_line_list:
+            group = line.find_group()
+            if group:
+                self._group = group
+                break
+
+    def process_color_area(self, area):
+        if self.reset_color_areas:
+            # gets True when Stock selection is encountered, the next color area encountered will set all color areas in self.color_areas used property to True and self.reset_color_areas back to False
+            for a in self.color_areas:
+                a.used = True
+            self.reset_color_areas = False
+        color_area_obj = area.color_area()
+        self.color_areas.append(color_area_obj)
+
+        if self.is_se:
+            color = area.selection_as_line_list[0][0]
+            color = color.split('-')[0].strip()
+            self._item_color = color if color else self._item_color
+
+    def find_slab_color(self, description):
+        slab_color = ''
+        if "slab" in description.lower():
+            index = description.lower().index('slab')
+            slab_color = description[:index]
+        return slab_color.strip()

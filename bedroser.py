@@ -75,6 +75,12 @@ def main():
     print(f"Reading pages:")
     price_list.create_pages()
 
+    # ================== for debugging
+    dfs = price_list.collect_selection_dfs()
+    export_selection_dataframes(dfs, pickle_db)  # in file
+
+    # ======================
+
     print(f"For each page: creating product tables...")
     price_list.create_product_tables()
 
@@ -89,11 +95,7 @@ def main():
         return
 
 
-    # ================== for debugging
-    dfs = price_list.collect_selection_dfs()
-    export_selection_dataframes(dfs, pickle_db)  # in file
 
-    # ======================
 
     end_time = time.time()
     hours, rem = divmod(end_time - start_time, 3600)

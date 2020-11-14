@@ -364,7 +364,7 @@ def import_selection_dataframes(filename):
                     objs.append(pickle.load(pickle_file))
                 except EOFError:
                     break
-    print("objs", objs)
+    # print("objs", objs)
     res_dict = {}
     for d in objs:
         z = copy.deepcopy(d)

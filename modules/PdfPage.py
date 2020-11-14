@@ -27,7 +27,7 @@ class PdfPage:
         pickled_dfs = self.read_pickled_data(pickle_data)
         if pickled_dfs:
             self.selection_dataframes = pickled_dfs
-            print("pickled_df------s", pickled_dfs)
+            # print("pickled_df------s", pickled_dfs)
         else:
             # print("no data")
             self.selection_dataframes = self.read_with_json_tabula(self.infilename, self.pagenumber, self.coordinates)

@@ -79,7 +79,8 @@ class PdfLine:
                     self._tabula_line[0] = ''
                 group_name = " ".join(self._tabula_line[:2]).replace('\xf8', '').strip()
 
-        if 'Stock' in group_name or 'NEW' in group_name or 'Only' in group_name or 'Discontinued' in group_name:
+        if group_name and (
+                'Stock' in group_name or 'NEW' in group_name or 'Only' in group_name or 'Discontinued' in group_name):
             group_name = None
 
         if group_name:
@@ -199,7 +200,7 @@ class PdfLine:
             # https://stackoverflow.com/questions/4998629/split-string-with-multiple-delimiters-in-python
             # https://docs.python.org/3/library/re.html
             s = str(self._tabula_line[0]).strip()
-            pack_info = re.split('\s|[\-](?!\d)', s)  # split if \s or \- not followed by a digit
+            pack_info = re.split('\s|\:|[\-](?!\d)', s)  # split if \s or : or \- not followed by a digit
             packaging_info_set = set(pack_info)
             for p_item in packaging_info_set:
                 p_item = str(p_item).lower()
@@ -208,14 +209,22 @@ class PdfLine:
                     if d_item == p_item:
                         label += 1
 
-                    # print(d_item , p_item, d_item == p_item)
+                        # print(d_item, p_item, d_item == p_item)
+                if len(packaging_info_set) > 1 and label == 0:
+                    # size takes length of 1 only, if packaging_info_set is longer then there must be smth form description,
+                    # if there actually was nothing then this packaging line is not relevant will be downgraded to handle edge cases
+                    label -= 1
 
+                if '(New)' in packaging_info_set:
+                    label += 1
                 for s_item in size_arr:
                     s_item = str(s_item).lower()
                     if s_item == p_item or dim_equals(fract_dim_to_float_dim(s_item), p_item) or dim_roughly_equals(
                             fract_dim_to_float_dim(s_item), p_item):
                         label += 2  # weight of the label is greater for size info
-                    # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item), dim_roughly_equals(fract_dim_to_float_dim(s_item), p_item))
+
+                        # print(s_item, p_item, s_item == p_item, dim_equals(fract_dim_to_float_dim(s_item), p_item),
+                        #       dim_roughly_equals(fract_dim_to_float_dim(s_item), p_item))
 
             if label > 0:
                 p_pc = self._tabula_line[pc_per_ctn_index] if pc_per_ctn_index else None
@@ -254,7 +263,7 @@ class PdfLine:
 
     def find_origin(self, index):
         origin = None
-        if not index == None:
+        if index is not None:
             origin = str(self._tabula_line[index]).replace('*', '')
 
         return origin
