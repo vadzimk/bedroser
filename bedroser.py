@@ -4,6 +4,7 @@ import time
 from modules.PdfDoc import PdfDoc
 from modules.tf import create_target_and_uom
 
+
 def main():
     try:
         cleanup()
@@ -15,7 +16,7 @@ def main():
     args = sys.argv  # get the list of arguments
     infilename = None
     if len(args) == 2:
-        infilename   = 'Bedros.pdf'
+        infilename = 'Bedros.pdf'
         if not os.path.exists(infilename) or not os.path.isfile(infilename):
             print(f"Default input file not found")
             infilename = None
@@ -54,7 +55,6 @@ def main():
     if has_se.lower() == 'y':
         se_page_range = ask_for_se_range(page_start, n_pages_to_process)
 
-
     print(f"Working on {infilename}\nPlease wait....")
     start_time = time.time()
 
@@ -62,8 +62,8 @@ def main():
     # # print(f"Html files created...\nCreating product tables. Please wait...")
 
     config_dictionary = read_to_dict(PR.TARGET_CONFIG)
-    pickle_db = 'pickle_db'
-    pickled_d = import_selection_dataframes(pickle_db)
+    selection_dfs_cache = 'selections.pickle'
+    pickled_d = import_selection_dataframes(selection_dfs_cache)
 
     price_list = PdfDoc(in_file_name=infilename,
                         pickled_data=pickled_d,
@@ -77,7 +77,7 @@ def main():
 
     # ================== for debugging
     dfs = price_list.collect_selection_dfs()
-    export_selection_dataframes(dfs, pickle_db)  # in file
+    export_selection_dataframes(dfs, selection_dfs_cache)  # in file
 
     # ======================
 
@@ -89,13 +89,10 @@ def main():
 
     print(f"Exporting into the file {PR.DOC_PRODUCT_TABLE}")
     try:
-        price_list.export_cumulative_dict()
+        price_list.export_cumulative_dict(PR.DOC_PRODUCT_TABLE)
     except PermissionError:
         print(f"Access to {PR.DOC_PRODUCT_TABLE} denied\nClose applications that might use it and try again")
         return
-
-
-
 
     end_time = time.time()
     hours, rem = divmod(end_time - start_time, 3600)
@@ -104,8 +101,6 @@ def main():
           f"Time elapsed: {minutes:.0f} min {seconds:.0f} sec\n"
           f"See:\n{PR.DIR_PROJECT}product_table.csv\n")
 
-
-
     create_target_uom_files = input(f"Create target.csv, uom.csv (y/n) ? ")
 
     print(f"Creating template file and UOM file...")
@@ -113,13 +108,13 @@ def main():
         try:
             create_target_and_uom()
         except PermissionError:
-            print(f"Access to {PR.DOC_UOM} or {PR.DOC_TARGET} denied\nClose applications that might use it and try again")
+            print(
+                f"Access to {PR.DOC_UOM} or {PR.DOC_TARGET} denied\nClose applications that might use it and try again")
             return
 
-    print(f"Task finished.\n"          
+    print(f"Task finished.\n"
           f"{PR.DOC_TARGET}\n"
           f"{PR.DOC_UOM}")
-
 
 
 if __name__ == "__main__":

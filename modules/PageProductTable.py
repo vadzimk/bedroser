@@ -11,6 +11,7 @@ from modules.Selection import Selection
 from modules.SelectionSE import SelectionSE
 import csv
 from pprint import pprint
+from modules.func import remove_duplicates
 
 
 class PageProductTable:
@@ -69,7 +70,8 @@ class PageProductTable:
         for sel in self.packaging_selections:
             print(sel)
 
-        self.group_prefix = ''  # represents category prefix of subgroup
+        self.group_prefix = ''  # represents category prefix of group
+        self.group_suffix = ''  # represents inline group name
         self.contains_panel = False
 
         # print("num pack sel", len(self.packaging_selections))
@@ -141,7 +143,8 @@ class PageProductTable:
                             self.group_prefix = ''
                         g_name = None
                         if not self.is_se:
-                            g_name = self.group_prefix + line.find_group() if line.find_group() else self.group_prefix.strip()
+                            self.group_suffix = line.find_group() if line.find_group() else self.group_suffix
+                            g_name = " ".join((self.group_prefix + ' ' + self.group_suffix).split())
                         self._group = g_name if g_name else self._group
                         if not self._group and self.contains_panel:
                             self._group = 'Panel'
@@ -171,8 +174,9 @@ class PageProductTable:
                         if not count_placeholder:  # chr is not in the item_code
                             self._vendor_code = item_code
                             # self._item_color = inline_color if inline_color else self._item_color
+                            self._item_color = self.fill_color_column_if_no_pattern_in_item_code()
+                            self._subgroup = remove_duplicates(self._subgroup, self._item_color)
                             self.push_attributes()
-
                         else:
                             left = item_code.split(chr)[0]
                             right = item_code.split(chr)[-1]
@@ -393,3 +397,13 @@ class PageProductTable:
             index = description.lower().index('slab')
             slab_color = description[:index]
         return slab_color.strip()
+
+    def fill_color_column_if_no_pattern_in_item_code(self):
+        color = ''
+        for area in self.color_areas:
+            for i in range(len(area.color_dict['Code'])):
+                if area.color_dict['Code'][i] in self._vendor_code:
+                    color = area.color_dict['Name'][i] + ' ' + area.color_dict['Code'][i]
+                    break
+        return color
+

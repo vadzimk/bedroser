@@ -76,7 +76,7 @@ class Selection:
         return is_packaging_area
 
     def extract_color_data(self):
-        """ :returns a dictionary containing colors of color_area"""
+        """ :returns a dictionary {"Name": names, "Code": codes} containing colors of color_area"""
         color_dict = None
         condition = None
         header = self.selection_as_line_list[0]

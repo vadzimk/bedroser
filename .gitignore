@@ -26,4 +26,4 @@ xpdf/
 project/*
 pdfinfo/
 
-pickle_db
+selections.pickle

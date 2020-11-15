@@ -20,9 +20,9 @@ class PdfDoc:
         self.__all_pages_product_dict = {}  # dictionary that will hold the items of all product tables
         self.jsondata = read_json_data(PR.DOC_SELECTIONS_COORDINATES)
 
-    def export_cumulative_dict(self):
+    def export_cumulative_dict(self, filename):
         df = pandas.DataFrame(self.__all_pages_product_dict)
-        df.to_csv(PR.DOC_PRODUCT_TABLE, index=False)
+        df.to_csv(filename, index=False)
 
     def create_pages(self):
         _pages = [PdfPage(infilename=self.in_file_name,

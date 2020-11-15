@@ -371,3 +371,18 @@ def import_selection_dataframes(filename):
         res_dict.update(z)
 
     return res_dict
+
+
+def remove_duplicates(target, source):
+    """ :param target: string to remove duplicates from
+    :param source: string to plug words from """
+    source = source.split()
+    for s in source:
+        target = target.replace(s, '')
+    return target.strip()
+
+s1 = 'Used Red Brick Antik Matte'
+s2 = 'Used Red USR'
+
+res = remove_duplicates(s1, s2)
+print(res)
