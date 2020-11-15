@@ -5,8 +5,12 @@ from modules.PdfDoc import PdfDoc
 from modules.tf import create_target_and_uom
 
 list_of_pages_with_doubled_rows = None
+DOC_SELECTIONS_COORDINATES = None
 
 def main():
+    global DOC_SELECTIONS_COORDINATES
+    DOC_SELECTIONS_COORDINATES = find_tabula_teplate_json_filename()
+
     try:
         cleanup()
         create_project()

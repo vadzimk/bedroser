@@ -16,6 +16,8 @@ import csv
 from PyPDF2 import PdfFileReader
 
 
+
+
 def cleanup():
     if os.path.exists(PR.DIR_PROJECT) and os.path.isdir(PR.DIR_PROJECT):
         shutil.rmtree(PR.DIR_PROJECT)
@@ -417,8 +419,23 @@ def is_valid_page_number(n, start, end):
 
     return is_valid
 
+def find_tabula_teplate_json_filename():
+    found = False
+    filename = None
+    dir_list = os.listdir()
+    for f in dir_list:
+        if 'tabula-template.json' in f:
+            filename = f
+            found = True
+            break
+    if not found:
+        print(f"tabula-template.json not found in the current directory\n"
+              f"Make table selections in Tabula for Windows,\n"
+              f"save the template in the current directory,\n"
+              f"and try again.")
+    return filename
 
 
-ask_for_pages_with_doubled_rows(1, 10)
+
 
 

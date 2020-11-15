@@ -3,6 +3,7 @@ import pandas
 from modules import PROJ_CONST as PR, PDF_CONST as PFC
 from modules.PdfPage import PdfPage
 from modules.func import *
+from bedroser import DOC_SELECTIONS_COORDINATES
 
 
 class PdfDoc:
@@ -18,7 +19,7 @@ class PdfDoc:
         self.in_file_name = in_file_name
         self._pages = None
         self.__all_pages_product_dict = {}  # dictionary that will hold the items of all product tables
-        self.jsondata = read_json_data(PR.DOC_SELECTIONS_COORDINATES)
+        self.jsondata = read_json_data(DOC_SELECTIONS_COORDINATES)
 
     def export_cumulative_dict(self, filename):
         df = pandas.DataFrame(self.__all_pages_product_dict)
