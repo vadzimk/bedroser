@@ -293,7 +293,7 @@ def ask_for_se_range(page_start, numpages_to_process):
     answer = input(f"Enter the first and last page number of SEQUEL ENCORE (first last): ")
     answer = answer.split()
     while not is_valid_se_range(answer, page_start, numpages_to_process):
-        print(f"Invalid range")
+        print(f"Invalid range. Separate numbers by space only.")
         answer = input(f"Enter the first and last page number of SEQUEL ENCORE (first last): ")
         answer = answer.split()
     first = int(answer[0])
@@ -380,4 +380,45 @@ def remove_duplicates(target, source):
     for s in source:
         target = target.replace(s, '')
     return target.strip()
+
+
+def ask_for_pages_with_doubled_rows(start, end):
+    """ @pre: page numbers separated by spaces entered or pressed enter
+    :return list of pages with doubled rows which were entered by the user"""
+    finished = False
+    answer = input(f"Enter page numbers with doubled rows\nPress Enter to continue\n(numbers must be separated by spaces if more than one):\n")
+    s_numbers = answer.split()
+    while not finished:
+        if not s_numbers:
+            finished = True
+        for n in s_numbers:
+            if not is_valid_page_number(n, start, end):
+                print(f"Invalid range. Separate numbers by space only.")
+                answer = input(f"Enter page numbers with doubled rows\nPress Enter to continue:\n")
+                s_numbers = answer.split()
+                break
+            finished = True
+
+    print(f"Pages with doubled spaces: {s_numbers}")
+
+    return [int(n) for n in s_numbers]
+
+
+def is_valid_page_number(n, start, end):
+    """ :param n is a pagenumber
+    :return true if n is in range and is an int"""
+    is_valid = True
+    try:
+       num = int(n)
+       if num < start or num > end:
+           is_valid = False
+    except ValueError:
+        is_valid = False
+
+    return is_valid
+
+
+
+ask_for_pages_with_doubled_rows(1, 10)
+
 

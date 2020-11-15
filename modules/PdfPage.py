@@ -9,6 +9,8 @@ from modules.PdfLine import PdfLine
 from modules.func import *
 from pprint import pprint
 
+from bedroser import list_of_pages_with_doubled_rows
+
 
 class PdfPage:
     """ converts Pdf page to csv, creates a list of PdfLine objects for each line and passes it to PdfProductTable and PdfColorTable"""
@@ -124,7 +126,7 @@ class PdfPage:
 
         column_coordinates = None
 
-        if pagenumber == 104:
+        if pagenumber in list_of_pages_with_doubled_rows:
             column_coordinates = PFC.COLUMN_X_COORDINATES_104_or106
 
         for c_tuple in selection_coordinates:

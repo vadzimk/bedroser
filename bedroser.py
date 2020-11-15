@@ -4,6 +4,7 @@ import time
 from modules.PdfDoc import PdfDoc
 from modules.tf import create_target_and_uom
 
+list_of_pages_with_doubled_rows = None
 
 def main():
     try:
@@ -54,6 +55,9 @@ def main():
 
     if has_se.lower() == 'y':
         se_page_range = ask_for_se_range(page_start, n_pages_to_process)
+
+    list_of_pages_with_doubled_rows = ask_for_pages_with_doubled_rows(
+        page_start, page_start + n_pages_to_process - 1)
 
     print(f"Working on {infilename}\nPlease wait....")
     start_time = time.time()
