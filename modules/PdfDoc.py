@@ -3,23 +3,24 @@ import pandas
 from modules import PROJ_CONST as PR, PDF_CONST as PFC
 from modules.PdfPage import PdfPage
 from modules.func import *
-from bedroser import DOC_SELECTIONS_COORDINATES
+
 
 
 class PdfDoc:
     """ manages a list of PdfPage objects"""
 
-    def __init__(self, in_file_name, pickled_data, config_dict, se_range, page_start=1, n_pages=1):
+    def __init__(self, in_file_name, pickled_data, template_json, config_dict, se_range, doubled_rows_pagens, page_start=1, n_pages=1):
         """by default grabs the first page only"""
         self.pickled = pickled_data
         self.config_dict = config_dict
         self.se_range = se_range
+        self.doubled_rows_pagens = doubled_rows_pagens
         self.page_start = page_start
         self.n_pages = n_pages
         self.in_file_name = in_file_name
         self._pages = None
         self.__all_pages_product_dict = {}  # dictionary that will hold the items of all product tables
-        self.jsondata = read_json_data(DOC_SELECTIONS_COORDINATES)
+        self.jsondata = read_json_data(template_json)
 
     def export_cumulative_dict(self, filename):
         df = pandas.DataFrame(self.__all_pages_product_dict)
@@ -31,6 +32,7 @@ class PdfDoc:
                           config_d=self.config_dict,
                           pagenumber=i,
                           se_range=self.se_range,
+                          doubled_rows_pagens=self.doubled_rows_pagens,
                           coordinates=extract_page_data_from_json_data(json_data=self.jsondata, pagenumber=i)) for i in
                   range(self.page_start, self.page_start + self.n_pages)]  # list of PdfPage objects
         self._pages = _pages

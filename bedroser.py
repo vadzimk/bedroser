@@ -5,11 +5,10 @@ from modules.PdfDoc import PdfDoc
 from modules.tf import create_target_and_uom
 
 list_of_pages_with_doubled_rows = None
-DOC_SELECTIONS_COORDINATES = None
+
 
 def main():
-    global DOC_SELECTIONS_COORDINATES
-    DOC_SELECTIONS_COORDINATES = find_tabula_teplate_json_filename()
+    DOC_SELECTIONS_COORDINATES = find_tabula_template_json_filename()
 
     try:
         cleanup()
@@ -75,10 +74,13 @@ def main():
 
     price_list = PdfDoc(in_file_name=infilename,
                         pickled_data=pickled_d,
+                        template_json=DOC_SELECTIONS_COORDINATES,
                         config_dict=config_dictionary,
+                        se_range=se_page_range,
+                        doubled_rows_pagens=list_of_pages_with_doubled_rows,
                         page_start=page_start,
                         n_pages=n_pages_to_process,
-                        se_range=se_page_range)
+                        )
 
     print(f"Reading pages:")
     price_list.create_pages()

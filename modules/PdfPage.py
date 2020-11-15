@@ -9,16 +9,17 @@ from modules.PdfLine import PdfLine
 from modules.func import *
 from pprint import pprint
 
-from bedroser import list_of_pages_with_doubled_rows
+# from bedroser import list_of_pages_with_doubled_rows
 
 
 class PdfPage:
     """ converts Pdf page to csv, creates a list of PdfLine objects for each line and passes it to PdfProductTable and PdfColorTable"""
 
-    def __init__(self, infilename, pickle_data, config_d, pagenumber, se_range, coordinates):
+    def __init__(self, infilename, pickle_data, config_d, pagenumber, se_range, doubled_rows_pagens, coordinates):
         self.infilename = infilename
         self.config_d = config_d
         self.pagenumber = pagenumber
+        self.doubled_rows_pagens = doubled_rows_pagens
         self.is_se = self.is_in_se_range(se_range, pagenumber)
         self.coordinates = coordinates
         print("page:", self.pagenumber)  # print page number while creating
@@ -126,7 +127,7 @@ class PdfPage:
 
         column_coordinates = None
 
-        if pagenumber in list_of_pages_with_doubled_rows:
+        if pagenumber in self.doubled_rows_pagens:
             column_coordinates = PFC.COLUMN_X_COORDINATES_104_or106
 
         for c_tuple in selection_coordinates:

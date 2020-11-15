@@ -388,7 +388,7 @@ def ask_for_pages_with_doubled_rows(start, end):
     """ @pre: page numbers separated by spaces entered or pressed enter
     :return list of pages with doubled rows which were entered by the user"""
     finished = False
-    answer = input(f"Enter page numbers with doubled rows\nPress Enter to continue\n(numbers must be separated by spaces if more than one):\n")
+    answer = input(f"Enter page numbers with doubled rows. Press Enter to continue\n(numbers must be separated by spaces if more than one):\n")
     s_numbers = answer.split()
     while not finished:
         if not s_numbers:
@@ -396,7 +396,7 @@ def ask_for_pages_with_doubled_rows(start, end):
         for n in s_numbers:
             if not is_valid_page_number(n, start, end):
                 print(f"Invalid range. Separate numbers by space only.")
-                answer = input(f"Enter page numbers with doubled rows\nPress Enter to continue:\n")
+                answer = input(f"Enter page numbers with doubled rows. Press Enter to continue:\n")
                 s_numbers = answer.split()
                 break
             finished = True
@@ -419,7 +419,7 @@ def is_valid_page_number(n, start, end):
 
     return is_valid
 
-def find_tabula_teplate_json_filename():
+def find_tabula_template_json_filename():
     found = False
     filename = None
     dir_list = os.listdir()
