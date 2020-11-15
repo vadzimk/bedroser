@@ -328,7 +328,7 @@ class PageProductTable:
                                                                                     indexes)
                 upp_options.append(label_pcctn_sfctn_ctnplt)
         if upp_options:
-            # upp_options.reverse()  # in case old and new info is presented, will grab the last one
+
             upp_options.sort(reverse=True, key=lambda item: item[0])
 
             print("upp_options", upp_options)
@@ -402,8 +402,9 @@ class PageProductTable:
         color = ''
         for area in self.color_areas:
             for i in range(len(area.color_dict['Code'])):
-                if area.color_dict['Code'][i] in self._vendor_code:
-                    color = area.color_dict['Name'][i] + ' ' + area.color_dict['Code'][i]
+                code = str(area.color_dict['Code'][i])
+                if code in self._vendor_code:
+                    color = area.color_dict['Name'][i] + ' ' + code
                     break
         return color
 

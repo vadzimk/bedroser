@@ -67,7 +67,7 @@ class Selection:
         for line in self.selection_as_line_list:
             flag = False
             for item in line:
-                if "Packaging" in str(item) or "Packing" in str(item):
+                if "Packaging" in str(item) or "Packing" in str(item) or "Pcs/Ctn" in str(item):
                     flag = True
                     break
             if flag:

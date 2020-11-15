@@ -381,8 +381,3 @@ def remove_duplicates(target, source):
         target = target.replace(s, '')
     return target.strip()
 
-s1 = 'Used Red Brick Antik Matte'
-s2 = 'Used Red USR'
-
-res = remove_duplicates(s1, s2)
-print(res)
