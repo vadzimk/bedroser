@@ -114,26 +114,10 @@ class PageProductTable:
                         self._origin = line.find_origin(origin_index)
 
                         self.description = line.find_subgroup() if line.find_subgroup() else self.description
-                        # if not self.is_se:
-                        #     description_splitted = re.split('-', self.description, maxsplit=1)
-                        # else:
-                        #     description_splitted = [self.description]
-                        #
-                        # inline_color = ''
-                        # (finish, inline_color) = self.find_finish_inline_color(description_splitted)
-                        # if not inline_color and self.is_se:
-                        #     inline_color = self.find_slab_color(self.description)
-                        # print("finish, inline color", (finish, inline_color))
-                        #
-                        # self._subgroup = " ".join(
-                        #     (description_splitted[0].strip().replace(finish, '') + " " + finish).split())
-                        # # remove color from subgroup if it was duplicated
-                        # self._subgroup = self._subgroup.replace(inline_color, '').strip()
-                        self._subgroup = self.description
-                        self._subgroup = self._subgroup.replace(self._item_color, '').strip()
+
+                        self._subgroup = self.description.replace(self._item_color, '').strip()
                         self._subgroup = re.sub('^\-', '', self._subgroup).strip()
-                        self._subgroup = self._subgroup.replace('- ', ' ')
-                        self._subgroup = self._subgroup.replace(' - ', ' ')
+                        self._subgroup = self._subgroup.replace('- ', ' ').replace(' - ', ' ')
                         self._subgroup = " ".join(self._subgroup.split())
 
                         # print("self._subgroup", self._subgroup)
@@ -169,46 +153,61 @@ class PageProductTable:
                         self._ctn_per_plt = ctn_plt if (ctn_plt and not str(ctn_plt) == '-') else ""
 
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
-                        chr = u'\u25CF'
-                        count_placeholder = item_code.count(chr)
-                        if not count_placeholder:  # chr is not in the item_code
+                        placeholder_ch = u'\u25CF'
+
+                        has_interior_p = re.search(f'{placeholder_ch}+(?!$)',
+                                                   item_code)  # has a placeholder not at the end of the string
+
+                        has_trailing_p = item_code[len(item_code) - 1] == placeholder_ch
+                        char_dict = self.find_last_CHs_dict_of_vendor_code(self.description)
+                        subgroup_copy = self._subgroup
+                        if has_trailing_p and has_interior_p:
+                            code_color_list = self.get_code_color_list()
+                            (code_left, code_right) = self.process_item_code_w_interior_placeholder(
+                                item_code, placeholder_ch)
+                            # for the trailing placeholer
+                            item_code_subgroup_list = self.make_item_code_subgroup(
+                                code_right, subgroup_copy, char_dict, placeholder_ch)
+                            for item in item_code_subgroup_list:
+                                (code_right_new, self._subgroup) = item
+                                self.multiply_by_color_and_push_attributes(
+                                    (code_left, code_right_new), code_color_list)
+                        elif has_trailing_p:
+                            item_code_subgroup_list = self.make_item_code_subgroup(
+                                item_code, subgroup_copy, char_dict, placeholder_ch)
+                            for item in item_code_subgroup_list:
+                                (self._vendor_code, self._subgroup) = item
+                                # self._item_color = inline_color if inline_color else self._item_color
+                                self._item_color = self.fill_color_column_if_no_pattern_in_item_code()
+                                self._subgroup = remove_duplicates(self._subgroup, self._item_color)
+                                self.push_attributes()
+                        elif has_interior_p:
+                            code_color_list = self.get_code_color_list()
+                            (code_left, code_right) = self.process_item_code_w_interior_placeholder(
+                                item_code, placeholder_ch)
+                            self.multiply_by_color_and_push_attributes((code_left, code_right),
+                                                                       code_color_list)
+                        else:  # placeholder is not in the item_code
                             self._vendor_code = item_code
                             # self._item_color = inline_color if inline_color else self._item_color
                             self._item_color = self.fill_color_column_if_no_pattern_in_item_code()
                             self._subgroup = remove_duplicates(self._subgroup, self._item_color)
                             self.push_attributes()
-                        else:
-                            left = item_code.split(chr)[0]
-                            right = item_code.split(chr)[-1]
 
-                            color_sublist = self.get_color_areas_with_conditions_sublist(self.description)
-                            if len(color_sublist):
-                                code_color_list = self.get_code_color(color_sublist)
-                            else:
-                                color_sublist = self.get_color_areas_no_conditions_sublist()
-                                code_color_list = self.get_code_color(color_sublist)
 
-                            for (ccode, item_color) in code_color_list:
-                                # comment out line below if need to differentiate b/w len of placeholder
-                                count_placeholder = len(
-                                    str(ccode))  # treat all placeholders as having the same len (requirement)
-                                if len(str(ccode)) == count_placeholder:
-                                    self._vendor_code = str(left) + str(ccode) + str(right)
-                                    self._item_color = item_color
-                                    # self._item_color = " ".join(
-                                    #     (item_color + " " + inline_color).split())
-                                    self.push_attributes()
 
-                        # self._item_color = line.find_item_color() if line.find_item_color() else self._item_color
-                        #
-        #
-        # print("Attributes:")
-        # print(self._series_name)
-        # print(self._group)
-        # print(self._subgroup)
-        # print(self._item_size)
-        # print(self._units_of_measure)
-        # print(self._unit_price)
+    def make_item_code_subgroup(self, code_w_p, subgroup_copy, char_dict, placeholder_ch):
+        """ :return a list of tuples (item_code, subgroup) for those with trailing placeholder_ch"""
+        item_code_subgroup_list = []
+        fin_chs = set(char_dict.keys())
+        for tr_c in fin_chs:
+            not_tr_c = list(fin_chs - {tr_c})[0]
+            subgroup = subgroup_copy.replace(char_dict[not_tr_c], '').replace('/', '')
+            code_new = re.sub(f'{placeholder_ch}$', tr_c, code_w_p)
+            pair = (code_new, subgroup)
+            item_code_subgroup_list.append(pair)
+        return item_code_subgroup_list
+
 
     def get_products(self):
         """@:returns the dictionary of products representing product table of the page"""
@@ -328,7 +327,6 @@ class PageProductTable:
                                                                                     indexes)
                 upp_options.append(label_pcctn_sfctn_ctnplt)
         if upp_options:
-
             upp_options.sort(reverse=True, key=lambda item: item[0])
 
             print("upp_options", upp_options)
@@ -411,9 +409,53 @@ class PageProductTable:
             # self.is_se
             for area in self.color_areas:
                 if not area.used:
-                    color = area.condition.split('-')[0].strip() # the color falls in the condition attribute
+                    color = area.condition.split('-')[0].strip()  # the color falls in the condition attribute
                     break
-
-
         return color
 
+    def find_last_CHs_dict_of_vendor_code(self, description):
+        """ :param description - item description potentially containing Bright/Matte
+        :return dictionary {'B': 'Bright' , 'M': 'Matte'] if Bright/Matte found in description or any other first letters of Xxxx/Yyyy or empty list if such construct not found"""
+        chs = {}
+        description = 'Bullnose Bright/Matte'
+        d = description.split('/')
+        if len(d) > 1:
+            left = d[-2]
+            right = d[-1]
+            left = left.split()[-1]
+            right = right.split()[0]
+            c_left = left[0].upper()
+            c_right = right[0].upper()
+            chs = {c_left: left, c_right: right}
+        return chs
+
+    def get_code_color_list(self):
+        color_sublist = self.get_color_areas_with_conditions_sublist(self.description)
+        if len(color_sublist):
+            code_color_list = self.get_code_color(color_sublist)
+        else:
+            color_sublist = self.get_color_areas_no_conditions_sublist()
+            code_color_list = self.get_code_color(color_sublist)
+        return code_color_list
+
+    def multiply_by_color_and_push_attributes(self, item_code_splitted, code_color_list):
+
+        (left, right) = item_code_splitted
+        for (ccode, item_color) in code_color_list:
+            # comment out line below if need to differentiate b/w len of placeholder
+            # # treat all placeholders as having the same len (requirement)
+            # if len(str(ccode)) == count_placeholder:
+            self._vendor_code = str(left) + str(ccode) + str(right)
+            self._item_color = item_color
+            # self._item_color = " ".join(
+            #     (item_color + " " + inline_color).split())
+            self.push_attributes()
+
+    def process_item_code_w_interior_placeholder(self, item_code, p):
+        """ :param p is placeholder
+        :return tuple left, right"""
+        code_splitted = re.split(f'{p}(?!$)', item_code, maxsplit=1)
+        code_left = code_splitted[0]
+        code_right = re.sub(f'^{p}+', '', code_splitted[-1])
+
+        return (code_left, code_right)

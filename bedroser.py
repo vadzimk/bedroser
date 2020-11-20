@@ -62,7 +62,6 @@ def main():
         list_of_pages_with_doubled_rows = ask_for_pages_with_doubled_rows(
             page_start, page_start + n_pages_to_process - 1)
 
-
     # ============= for debugging
 
     rescan = input(f"Rescan pages? (y/n): ")
