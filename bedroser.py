@@ -56,11 +56,21 @@ def main():
         print(f"Invalid answer")
         has_se = input("Is SEQUEL ENCORE in this page range? (y/n): ")
 
+    list_of_pages_with_doubled_rows = []
     if has_se.lower() == 'y':
         se_page_range = ask_for_se_range(page_start, n_pages_to_process)
+        list_of_pages_with_doubled_rows = ask_for_pages_with_doubled_rows(
+            page_start, page_start + n_pages_to_process - 1)
 
-    list_of_pages_with_doubled_rows = ask_for_pages_with_doubled_rows(
-        page_start, page_start + n_pages_to_process - 1)
+
+    # ============= for debugging
+
+    rescan = input(f"Rescan pages? (y/n): ")
+    if rescan.lower()=='y':
+        rescan = True
+    else:
+        rescan = False
+    # =========================
 
     print(f"Working on {infilename}\nPlease wait....")
     start_time = time.time()
@@ -70,7 +80,9 @@ def main():
 
     config_dictionary = read_to_dict(PR.TARGET_CONFIG)
     selection_dfs_cache = 'selections.pickle'
-    pickled_d = import_selection_dataframes(selection_dfs_cache)
+    pickled_d = {}
+    if not rescan:
+        pickled_d = import_selection_dataframes(selection_dfs_cache)
 
     price_list = PdfDoc(in_file_name=infilename,
                         pickled_data=pickled_d,

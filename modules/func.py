@@ -356,7 +356,7 @@ def export_selection_dataframes(dfs, filename):
         print('error from pickle_dict')
 
 def import_selection_dataframes(filename):
-    """ :return a list of dictionaries {pagenumber: list_of_selections} or an empty list """
+    """ :return a dictionary {pagenumber: list_of_selections} or an empty dict """
     objs = []
 
     if os.path.exists(filename):
@@ -388,7 +388,7 @@ def ask_for_pages_with_doubled_rows(start, end):
     """ @pre: page numbers separated by spaces entered or pressed enter
     :return list of pages with doubled rows which were entered by the user"""
     finished = False
-    answer = input(f"Enter page numbers with doubled rows. Press Enter to continue\n(numbers must be separated by spaces if more than one):\n")
+    answer = input(f"\nEnter page numbers with doubled rows. Press Enter to continue\n(numbers must be separated by spaces if more than one):\n")
     s_numbers = answer.split()
     while not finished:
         if not s_numbers:

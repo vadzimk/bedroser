@@ -14,8 +14,8 @@ It is intended to automate entry of data arriving from its supplier into the ERP
 
 Java installation links:  
 https://www.java.com/en/download/  
-https://www.java.com/en/download/help/path.html
-Tabula installation link:
+https://www.java.com/en/download/help/path.html  
+Tabula installation link:  
 https://tabula.technology/
 
 ## Usage

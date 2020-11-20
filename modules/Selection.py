@@ -83,7 +83,7 @@ class Selection:
         if len(header) == 1:
             # color table with condition
             condition = header[0].replace('Colors', '')
-            condition = "".join(condition.split())
+            condition = " ".join(condition.split())
             value_lines = self.selection_as_line_list[2:]
             names = [" ".join(item[0].split()[:-1]) for item in value_lines]
             codes = [item[0].split()[-1] for item in value_lines]

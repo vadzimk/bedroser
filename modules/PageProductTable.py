@@ -400,11 +400,20 @@ class PageProductTable:
 
     def fill_color_column_if_no_pattern_in_item_code(self):
         color = ''
-        for area in self.color_areas:
-            for i in range(len(area.color_dict['Code'])):
-                code = str(area.color_dict['Code'][i])
-                if code in self._vendor_code:
-                    color = area.color_dict['Name'][i] + ' ' + code
+        if not self.is_se:
+            for area in self.color_areas:
+                for i in range(len(area.color_dict['Code'])):
+                    code = str(area.color_dict['Code'][i])
+                    if code in self._vendor_code:
+                        color = area.color_dict['Name'][i] + ' ' + code
+                        break
+        else:
+            # self.is_se
+            for area in self.color_areas:
+                if not area.used:
+                    color = area.condition.split('-')[0].strip() # the color falls in the condition attribute
                     break
+
+
         return color
 
