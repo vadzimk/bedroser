@@ -155,15 +155,17 @@ class PageProductTable:
                         item_code = line.find_vendor_code() if line.find_vendor_code() else self._vendor_code
                         placeholder_ch = u'\u25CF'
 
-                        has_interior_p = re.search(f'{placeholder_ch}+(?!$)',
+                        has_interior_p = re.search(f'{placeholder_ch}+(?!$|{placeholder_ch}+$)',
                                                    item_code)  # has a placeholder not at the end of the string
 
-                        has_trailing_p = item_code[len(item_code) - 1] == placeholder_ch
+                        has_trailing_p = re.search(f'{placeholder_ch}+$', item_code)
+
                         char_dict = self.find_last_CHs_dict_of_vendor_code(self.description)
                         subgroup_copy = self._subgroup
-                        if has_trailing_p and has_interior_p:
-                            code_color_list = self.get_code_color_list()
-                            (code_left, code_right) = self.process_item_code_w_interior_placeholder(
+
+                        code_color_list = self.get_code_color_list()
+                        if has_interior_p and (has_trailing_p and has_trailing_p.end() - has_trailing_p.start() == 1):
+                            (code_left, code_right) = self.process_item_code_use_color_section(
                                 item_code, placeholder_ch)
                             # for the trailing placeholer
                             item_code_subgroup_list = self.make_item_code_subgroup(
@@ -172,7 +174,7 @@ class PageProductTable:
                                 (code_right_new, self._subgroup) = item
                                 self.multiply_by_color_and_push_attributes(
                                     (code_left, code_right_new), code_color_list)
-                        elif has_trailing_p:
+                        elif has_trailing_p and (has_trailing_p.end()-has_trailing_p.start() == 1):
                             item_code_subgroup_list = self.make_item_code_subgroup(
                                 item_code, subgroup_copy, char_dict, placeholder_ch)
                             for item in item_code_subgroup_list:
@@ -181,9 +183,8 @@ class PageProductTable:
                                 self._item_color = self.fill_color_column_if_no_pattern_in_item_code()
                                 self._subgroup = remove_duplicates(self._subgroup, self._item_color)
                                 self.push_attributes()
-                        elif has_interior_p:
-                            code_color_list = self.get_code_color_list()
-                            (code_left, code_right) = self.process_item_code_w_interior_placeholder(
+                        elif has_interior_p or (has_trailing_p and has_trailing_p.end() - has_trailing_p.start() > 1):
+                            (code_left, code_right) = self.process_item_code_use_color_section(
                                 item_code, placeholder_ch)
                             self.multiply_by_color_and_push_attributes((code_left, code_right),
                                                                        code_color_list)
@@ -197,7 +198,9 @@ class PageProductTable:
 
 
     def make_item_code_subgroup(self, code_w_p, subgroup_copy, char_dict, placeholder_ch):
-        """ :return a list of tuples (item_code, subgroup) for those with trailing placeholder_ch"""
+        """ :return a list of tuples (item_code, subgroup) for those with trailing placeholder_ch
+        item_code will have placeholder at the end replaced by dict.key
+        subgroup will have word of the dict not corresponding to the key removed"""
         item_code_subgroup_list = []
         fin_chs = set(char_dict.keys())
         for tr_c in fin_chs:
@@ -417,7 +420,7 @@ class PageProductTable:
         """ :param description - item description potentially containing Bright/Matte
         :return dictionary {'B': 'Bright' , 'M': 'Matte'] if Bright/Matte found in description or any other first letters of Xxxx/Yyyy or empty list if such construct not found"""
         chs = {}
-        description = 'Bullnose Bright/Matte'
+
         d = description.split('/')
         if len(d) > 1:
             left = d[-2]
@@ -451,11 +454,11 @@ class PageProductTable:
             #     (item_color + " " + inline_color).split())
             self.push_attributes()
 
-    def process_item_code_w_interior_placeholder(self, item_code, p):
+    def process_item_code_use_color_section(self, item_code, p):
         """ :param p is placeholder
         :return tuple left, right"""
-        code_splitted = re.split(f'{p}(?!$)', item_code, maxsplit=1)
+        code_splitted = re.split(f'{p}+', item_code, maxsplit=1)
         code_left = code_splitted[0]
-        code_right = re.sub(f'^{p}+', '', code_splitted[-1])
+        code_right = code_splitted[-1]
 
         return (code_left, code_right)
