@@ -103,7 +103,10 @@ class Selection:
             names = [item[0] for item in value_lines]
             color_descriptions = [item[1] for item in value_lines]
             codes = [item[-1] for item in value_lines]
-            color_dict = {"Name": names, "Color": color_descriptions, "Code": codes}
+            if header[1] == "Size":
+                color_dict = {"Name": names, "Size": color_descriptions, "Code": codes}
+            else:
+                color_dict = {"Name": names, "Color": color_descriptions, "Code": codes}
 
         print("condition:", condition)
         pprint(color_dict)

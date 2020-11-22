@@ -67,31 +67,7 @@ class PdfDoc:
 
         # print(f"cumulative dict: {self.__list_of_all_product_dicts}")
 
-    # # # =================== Not used  =======================
-    # # def create_decending_stack_of_pages(self):
-    # #     """ :returns a stack onf PdfPage objects with greatest page number first"""
-    # #     range_start = self.page_start
-    # #     range_end = self.page_start + self.n_pages
-    # #
-    # #     _stack = []
-    # #
-    # #     index = range_end - 1
-    # #     while index >= range_start:
-    # #         page = PdfPage(self.in_file_name, pagenumber=index)
-    # #         _stack.append(page)
-    # #         index -= 1
-    # #     return _stack
-    # #
-    # # def construct_product_tables (self, the_stack):
-    # #     range_start = self.page_start
-    # #     range_end = self.page_start + self.n_pages
-    # #
-    # #     index = range_end - 1
-    # #
-    # #     for i in range(len(the_stack)):
-    # #         if the_stack[i]._contains_color_table:
-    # #             the_stack[i].create_product_table()
-    # #         # else:
+
 
     def collect_selection_dfs(self):
         """ :return a dictionary {pagenumber: [df1, df2 ...]}"""

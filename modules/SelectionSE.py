@@ -4,6 +4,7 @@ from modules.PdfLineSE import PdfLineSE
 
 
 class SelectionSE(Selection):
+    """ Represents area of selection on the page of SEQUEL ENCORE """
     def __init__(self, df, is_se, conf_d):
         super().__init__(df, is_se)
         self._config = conf_d

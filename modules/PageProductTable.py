@@ -28,20 +28,7 @@ class PageProductTable:
             self.selection_objects = [Selection(df, self.is_se) for df in selection_dfs]
         self.set_selection_types()  # init selection types
 
-        # self.lines = lines
-        # print("guessed_rows")
-        # for row in guessed_rows:
-        #     print(row)
-        # self.guessed_rows_strings = [self.join_list_items(item) for item in
-        #                              guessed_rows]  # joins guessed rows and retrurns a list of strings
-        # print("guessed_strings:")
-        # for string in self.guessed_rows_strings:
-        #     print(string)
-        # # print("---tabulalines:")
-        # # for line in lines:
-        # #     print(line._tabula_line)
-        # print("__ end")
-        # self.colors = None  # for testing
+
         self.description = None
 
         self.__products = {key: [] for key in
@@ -75,17 +62,7 @@ class PageProductTable:
         self.contains_panel = False
         self.all_item_codes = [] # all item_codes from current page
 
-        # print("num pack sel", len(self.packaging_selections))
 
-        # self.build_table()  # put products in the dictionary
-
-        # TODO keep this
-        # export product table as csv
-        # df = pandas.DataFrame(self.__products)
-        # df.to_csv('{}data_frame{}.csv'.format(PR.DIR_PRODUCT_TABLES, page_number), index=False)
-
-        # # export treated rows as csv
-        # self.export_treated_rows()
 
     def build_table(self, ext_pckg=None, ext_series=None):
         # put products in the dictionary
@@ -280,19 +257,23 @@ class PageProductTable:
             m += area.length
         return m if m > 0 else 1
 
-    def get_code_color(self, color_areas):
-        """ :return a list of tuples (color_code, item_color)
+    def get_code_color_size(self, color_areas):
+        """ :return a list of tuples (color_code, item_color, size_condition)
         for all areas where area.used == False"""
         code_color = []
         for area in color_areas:
             if not area.used:
                 for i in range(area.length):
                     color_code = area.color_dict.get('Code')[i]
+                    size_condition_list = area.color_dict.get('Size')
+                    size_condition = None
+                    if size_condition_list:
+                        size_condition = size_condition_list[i]
                     item_color = []
                     for key in area.color_dict.keys():
                         item_color.append(str(area.color_dict[key][i]))
                     item_color = " ".join(item_color)
-                    code_color.append((color_code, item_color))
+                    code_color.append((color_code, item_color, size_condition))
         return code_color
 
     def get_color_conditions(self):
@@ -389,7 +370,8 @@ class PageProductTable:
 
     def process_color_area(self, area):
         if self.reset_color_areas:
-            # gets True when Stock selection is encountered, the next color area encountered will set all color areas in self.color_areas used property to True and self.reset_color_areas back to False
+            # gets True when Stock selection is encountered, the next color area encountered will set all color areas in
+            # self.color_areas used property to True and self.reset_color_areas back to False
             for a in self.color_areas:
                 a.used = True
             self.reset_color_areas = False
@@ -427,7 +409,8 @@ class PageProductTable:
 
     def find_last_CHs_dict_of_vendor_code(self, description):
         """ :param description - item description potentially containing Bright/Matte
-        :return dictionary {'B': 'Bright' , 'M': 'Matte'] if Bright/Matte found in description or any other first letters of Xxxx/Yyyy or empty list if such construct not found"""
+        :return dictionary {'B': 'Bright' , 'M': 'Matte'] if Bright/Matte found in description or any other first
+        letters of Xxxx/Yyyy or empty list if such construct not found"""
         chs = {}
 
         d = description.split('/')
@@ -444,27 +427,35 @@ class PageProductTable:
     def get_code_color_list(self):
         color_sublist = self.get_color_areas_with_conditions_sublist(self.description)
         if len(color_sublist):
-            code_color_list = self.get_code_color(color_sublist)
+            code_color_list = self.get_code_color_size(color_sublist)
         else:
             color_sublist = self.get_color_areas_no_conditions_sublist()
-            code_color_list = self.get_code_color(color_sublist)
+            code_color_list = self.get_code_color_size(color_sublist)
         return code_color_list
 
     def multiply_by_color_and_push_attributes(self, item_code_splitted, code_color_list):
-
+        """ @post for each color in code_color list collect vendor_code and item_color and if vendor code don't match
+        any of the all_item_codes extrated beforehead from STOCK areas of the current page, then pus_attributes
+        this condition eliminates push that results in duplicates in item_code column"""
         (left, right) = item_code_splitted
-        for (ccode, item_color) in code_color_list:
-            # comment out line below if need to differentiate b/w len of placeholder
-            # # treat all placeholders as having the same len (requirement)
-            # if len(str(ccode)) == count_placeholder:
+        for (ccode, item_color, size_cond) in code_color_list:
+
+            if size_cond:
+                size_cond_norm = "".join(size_cond.split()).lower()
+            else:
+                size_cond = ''
+                size_cond_norm = ''
+
+
             item_code = str(left) + str(ccode) + str(right)
             if item_code not in self.all_item_codes:
                 # push only if it is not going to duplicate existing row
                 self._vendor_code = item_code
-                self._item_color = item_color
-                # self._item_color = " ".join(
-                #     (item_color + " " + inline_color).split())
-                self.push_attributes()
+                self._item_color = item_color.replace(size_cond, '')
+                if not size_cond_norm or size_cond_norm==self._item_size:
+                    self.push_attributes()
+
+
 
     def process_item_code_use_color_section(self, item_code, p):
         """ :param p is placeholder

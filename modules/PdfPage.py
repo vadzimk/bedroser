@@ -9,6 +9,7 @@ from modules.PdfLine import PdfLine
 from modules.func import *
 from pprint import pprint
 
+
 # from bedroser import list_of_pages_with_doubled_rows
 
 
@@ -35,42 +36,8 @@ class PdfPage:
             # print("no data")
             self.selection_dataframes = self.read_with_json_tabula(self.infilename, self.pagenumber, self.coordinates)
 
-        # # would work if tables were recognized with proper header but there are plenty of small tables each with its own tiltle
-        # self.selection_dicts = self.convert_list_of_dataframes_to_list_of_dict(self.selection_dataframes)
-        # print("dicts")
-        # for my_dict in self.selection_dicts:
-        #     print_dict(my_dict)
-        #     print("")
-        #     pprint(my_dict)
-        #     print("")
-
         # # write to list of template rows for testing and tabulated csv only
         self.list_of_page_tabula_rows = self.convert_list_of_dataframes_tolist_of_lines(self.selection_dataframes)
-        # # print for testing
-        # for my_df in self.selection_dataframes:
-        #     selection_lines = self.convert_list_of_dataframes_tolist_of_lines([my_df])
-        #     for line in selection_lines:
-        #         print(line)
-        #     print("")
-
-        # #  represent selections as lists of lines
-        # self.selections_as_line_lists = self.convert_list_of_dataframes_to_selection_lines(self.selection_dataframes)
-
-        # self._contains_color_table = self.contains_color_table()
-
-        # constructs list of PdfLine objects
-        # for each template row make an object that contains methods that can fetch attributes
-
-        # self._pdf_line_list = [PdfLine(line) for line in self.list_of_page_tabula_rows]
-
-        # self._page_contains_color_info = self.page_contains_color_info()
-
-        # self._color_list = None
-        # # below initialise the color list
-        # if self._contains_color_table:
-        #     self._color_list = self.extract_color_list_with_tabula_lattice()
-        # print("color_list", self._color_list)
-        # print("contains color table", self._contains_color_table)
 
         # moved creation of product tables to the PdfDoc class
         self.product_table = None  # main table of the page containing its products together with all attributes
@@ -78,40 +45,13 @@ class PdfPage:
         # export tabulated csv for current pagenumber
         write_line_list_to_csv(self.list_of_page_tabula_rows, self.midfilename)
 
-    # def contains_color_table_header(self):
-    #     """ :returns true if guessed rows contain "- COLORS" which is usually in color table header"""
-    #     contains = False
-    #     for row in self.list_of_page_tabula_rows:
-    #         row = [str(item) for item in row]
-    #         row_string = "".join(row)
-    #         if "Colors" in row_string:
-    #             contains = True
-    #     return contains
-
-    # def contains_color_table(self):
-    #     """ :returns true if current page contains separate color table on the bottom of the page """
-    #     contains = self.contains_color_table_header()
-    #     return contains
-
     def create_product_table(self):
-        # print(self.pagenumber, "PdfPage._page_contains_color_info", self._page_contains_color_info)
-        # print(self.pagenumber, "PdfPage._color_list", self._color_list)
-        # print(self.pagenumber, "external color list", external_color_list)
-        # print(self.pagenumber, "_contains_color_table", self._contains_color_table)
-        # print(self.pagenumber, "contains_color_table_header", self.contains_color_table_header())
-        # ####### print(self.pagenumber, "contains_color_note", self.contains_color_note())
 
-        # if self._page_contains_color_info or self._color_list:  # color in the product row or in a table below on the same page
-
-        # was passed selected_areas=self.selections_as_line_lists
         self.product_table = PageProductTable(
             conf_d=self.config_d,
             page_number=self.pagenumber,
             is_se=self.is_se,
             selection_dfs=self.selection_dataframes)
-        # else:  # page doesn't contin color info in itself
-        #     self._product_table = PageProductTable(self._pdf_line_list, self.list_of_template_rows, self.pagenumber,
-        #                                            external_color_list)
 
     def read_with_json_tabula(self, infilename, pagenumber, json_page_data):
         """
@@ -139,10 +79,6 @@ class PdfPage:
             try:
                 df = df_list[0]  # the dictionary is on a singleton list
                 df = df.fillna('')  # nan fields are substituted by empty string
-
-                # # for testing
-                # export_dict_ragged_to_csv(df.to_dict(), self.midfilename)
-                # convert dataframe to list of rows including header
 
                 dict_list.append(df)
             except IndexError:
@@ -189,17 +125,10 @@ class PdfPage:
         s1, s2 = se_range
         is_se = False
         if s1 and s2:  # are not None
-            is_se = pagenumber in range(s1, s2+1)
+            is_se = pagenumber in range(s1, s2 + 1)
         return is_se
-
 
     def read_pickled_data(self, pickled):
         """ :param pickled a list of dictionaries {pagenumber: list_of_selections} or an empty list
         :return list of dataframes representing all selections on the current page"""
         return pickled.get(self.pagenumber)
-
-
-
-
-
-
