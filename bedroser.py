@@ -140,6 +140,7 @@ def main():
     print(f"Task finished.\n"
           f"{PR.DOC_TARGET}\n"
           f"{PR.DOC_UOM}")
+    input(f"Press Enter to close this window")
 
 
 if __name__ == "__main__":
