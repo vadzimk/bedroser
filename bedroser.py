@@ -98,11 +98,11 @@ def main():
     print(f"Reading pages:")
     price_list.create_pages()
 
-    # # ================== for debugging
-    # dfs = price_list.collect_selection_dfs()
-    # export_selection_dataframes(dfs, selection_dfs_cache)  # in file
-    #
-    # # ======================
+    # ================== for caching  =============
+    dfs = price_list.collect_selection_dfs()
+    export_selection_dataframes(dfs, selection_dfs_cache)  # in file
+
+    # =============================================
 
     print(f"For each page: creating product tables...")
     price_list.create_product_tables()
