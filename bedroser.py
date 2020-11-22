@@ -67,10 +67,10 @@ def main():
     if os.path.exists(selection_dfs_cache):
         print(f"Found {selection_dfs_cache}")
         rescan = input(f"Rescan pages? (y/n): ")
-    if rescan.lower()=='y':
-        rescan = True
-    else:
-        rescan = False
+        if rescan.lower()=='y':
+            rescan = True
+        else:
+            rescan = False
     # ==============================================
 
     print(f"Working on {infilename}\nPlease wait....")

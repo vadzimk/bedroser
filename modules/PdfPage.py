@@ -43,7 +43,7 @@ class PdfPage:
         self.product_table = None  # main table of the page containing its products together with all attributes
 
         # export tabulated csv for current pagenumber
-        write_line_list_to_csv(self.list_of_page_tabula_rows, self.midfilename)
+        # write_line_list_to_csv(self.list_of_page_tabula_rows, self.midfilename)
 
     def create_product_table(self):
 
