@@ -41,7 +41,7 @@ class PageProductTable:
         # # for line in lines:
         # #     print(line._tabula_line)
         # print("__ end")
-        self.colors = None  # for testing
+        # self.colors = None  # for testing
         self.description = None
 
         self.__products = {key: [] for key in
@@ -73,6 +73,7 @@ class PageProductTable:
         self.group_prefix = ''  # represents category prefix of group
         self.group_suffix = ''  # represents inline group name
         self.contains_panel = False
+        self.all_item_codes = [] # all item_codes from current page
 
         # print("num pack sel", len(self.packaging_selections))
 
@@ -90,6 +91,7 @@ class PageProductTable:
         # put products in the dictionary
         print("build_table:")
         origin_index = None
+        self.all_item_codes = self.find_all_item_codes()
 
         for area in self.selection_objects:
             print(area)
@@ -195,6 +197,16 @@ class PageProductTable:
                             self._subgroup = remove_duplicates(self._subgroup, self._item_color)
                             self.push_attributes()
 
+    def find_all_item_codes(self):
+        """ :return list of vendor codes from current page"""
+        all_item_codes = []
+        stock_areas = [area for area in self.selection_objects if area.type == PFC.TYPE_STOCK]
+        for area in stock_areas:
+            for line in area.pdf_line_list:
+                if line._is_product_table_row:
+                    code = line.find_vendor_code()
+                    all_item_codes.append(code)
+        return all_item_codes
 
 
     def make_item_code_subgroup(self, code_w_p, subgroup_copy, char_dict, placeholder_ch):
@@ -257,10 +269,7 @@ class PageProductTable:
         """push properties to the dictionary"""
         for i in range(multiplier):
             for key in PFC.PRODUCT_TABLE_FIELDS:
-                if self.colors and key == "_item_color":
-                    value = self.colors[i]
-                else:
-                    value = eval("self.%s" % (key))  # line at key
+                value = eval("self.%s" % (key))  # line at key
                 self.__products[key].append(value)
 
     def set_color_multiplier(self, color_areas):
@@ -448,11 +457,14 @@ class PageProductTable:
             # comment out line below if need to differentiate b/w len of placeholder
             # # treat all placeholders as having the same len (requirement)
             # if len(str(ccode)) == count_placeholder:
-            self._vendor_code = str(left) + str(ccode) + str(right)
-            self._item_color = item_color
-            # self._item_color = " ".join(
-            #     (item_color + " " + inline_color).split())
-            self.push_attributes()
+            item_code = str(left) + str(ccode) + str(right)
+            if item_code not in self.all_item_codes:
+                # push only if it is not going to duplicate existing row
+                self._vendor_code = item_code
+                self._item_color = item_color
+                # self._item_color = " ".join(
+                #     (item_color + " " + inline_color).split())
+                self.push_attributes()
 
     def process_item_code_use_color_section(self, item_code, p):
         """ :param p is placeholder
