@@ -23,7 +23,7 @@ class PdfPage:
         self.doubled_rows_pagens = doubled_rows_pagens
         self.is_se = self.is_in_se_range(se_range, pagenumber)
         self.coordinates = coordinates
-        print("page:", self.pagenumber)  # print page number while creating
+        print(f"page:", self.pagenumber)  # print page number while creating
         self.midfilename = '{}tabulated_{}.csv'.format(PR.DIR_TABULATED_CSV, self.pagenumber)
         # read all rows of the current page in a list of lists
 
@@ -82,7 +82,8 @@ class PdfPage:
 
                 dict_list.append(df)
             except IndexError:
-                print(f"No selections on page {pagenumber}")
+                pass
+                # print(f"No selections on page {pagenumber}")
         return dict_list
 
     def convert_dataframe_tolist_of_lines(self, df):
@@ -115,7 +116,7 @@ class PdfPage:
         selectios_ = []
         for my_df in df_list:
             selection_lines = self.convert_list_of_dataframes_tolist_of_lines([my_df])
-            print(selection_lines)
+            # print(selection_lines)
             selectios_.append(selection_lines)
         # print("selections as lines:")
         # print(selectios_)

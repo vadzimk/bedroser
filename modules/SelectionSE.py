@@ -15,7 +15,7 @@ class SelectionSE(Selection):
         """ :return true if this is a color area """
         is_color_area = False
         s = self.selection_as_line_list[0]
-        print("self.selection_as_line_list[0]", self.selection_as_line_list[0])
+        # print("self.selection_as_line_list[0]", self.selection_as_line_list[0])
 
         if len(s) == 1:
             is_color_area = True

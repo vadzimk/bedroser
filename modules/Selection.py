@@ -88,7 +88,7 @@ class Selection:
             names = [" ".join(item[0].split()[:-1]) for item in value_lines]
             codes = [item[0].split()[-1] for item in value_lines]
             color_dict = {"Name": names, "Code": codes}
-            print('color table with condition')
+            # print('color table with condition')
         elif len(header) == 2:
             # color table with condition
             if 'Colors' in header[0]:
@@ -108,8 +108,8 @@ class Selection:
             else:
                 color_dict = {"Name": names, "Color": color_descriptions, "Code": codes}
 
-        print("condition:", condition)
-        pprint(color_dict)
+        # print("condition:", condition)
+        # pprint(color_dict)
 
         return (color_dict, condition)
 

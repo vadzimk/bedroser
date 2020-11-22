@@ -32,14 +32,11 @@ def main():
     infilename_n_pages = determine_n_pages(infilename)
     print(f"The number of pages in this file is: {infilename_n_pages}")
 
-    # page_start = 5
 
-    # commented while testing
     page_start = ask_for_starting_page(infilename_n_pages)
     print(f"Chosen starting page: {page_start}")
 
-    # n_pages_to_process = 1
-    # commented while testing
+
     n_pages_to_process = ask_for_n_pages(infilename_n_pages, page_start)
     if n_pages_to_process == "ALL":
         n_pages_to_process = infilename_n_pages - page_start + 1
@@ -62,23 +59,24 @@ def main():
         list_of_pages_with_doubled_rows = ask_for_pages_with_doubled_rows(
             page_start, page_start + n_pages_to_process - 1)
 
-    # ============= for debugging
+    selection_dfs_cache = 'cache.pickle'
 
-    rescan = input(f"Rescan pages? (y/n): ")
+    # ============= option to use cache ============
+    rescan = None
+    if os.path.exists(selection_dfs_cache):
+        print(f"Found {selection_dfs_cache}")
+        rescan = input(f"Rescan pages? (y/n): ")
     if rescan.lower()=='y':
         rescan = True
     else:
         rescan = False
-    # =========================
+    # ==============================================
 
     print(f"Working on {infilename}\nPlease wait....")
     start_time = time.time()
 
-    # # html_created = convert_to_html(infilename, page_start, page_start + n_pages_to_process - 1)
-    # # print(f"Html files created...\nCreating product tables. Please wait...")
-
     config_dictionary = read_to_dict(PR.TARGET_CONFIG)
-    selection_dfs_cache = 'selections.pickle'
+
     pickled_d = {}
     if not rescan:
         pickled_d = import_selection_dataframes(selection_dfs_cache)
@@ -96,11 +94,11 @@ def main():
     print(f"Reading pages:")
     price_list.create_pages()
 
-    # ================== for debugging
-    dfs = price_list.collect_selection_dfs()
-    export_selection_dataframes(dfs, selection_dfs_cache)  # in file
-
-    # ======================
+    # # ================== for debugging
+    # dfs = price_list.collect_selection_dfs()
+    # export_selection_dataframes(dfs, selection_dfs_cache)  # in file
+    #
+    # # ======================
 
     print(f"For each page: creating product tables...")
     price_list.create_product_tables()

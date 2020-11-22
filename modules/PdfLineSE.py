@@ -38,7 +38,7 @@ class PdfLineSE(PdfLine):
             if done:
                 break
 
-        print("group_name", group_name)
+        # print("group_name", group_name)
 
         return group_name
 

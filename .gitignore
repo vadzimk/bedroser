@@ -26,4 +26,4 @@ xpdf/
 project/*
 pdfinfo/
 
-selections.pickle
+cache.pickle

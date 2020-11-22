@@ -53,9 +53,9 @@ class PageProductTable:
 
         self.packaging_selections = self.collect_packaging_selections()  # a list of Packaging_selection objects of current page that is fixed by the time  build_table is called
 
-        print("packaging_selections")
-        for sel in self.packaging_selections:
-            print(sel)
+        # print("packaging_selections")
+        # for sel in self.packaging_selections:
+        #     print(sel)
 
         self.group_prefix = ''  # represents category prefix of group
         self.group_suffix = ''  # represents inline group name
@@ -66,12 +66,12 @@ class PageProductTable:
 
     def build_table(self, ext_pckg=None, ext_series=None):
         # put products in the dictionary
-        print("build_table:")
+        # print("build_table:")
         origin_index = None
         self.all_item_codes = self.find_all_item_codes()
 
         for area in self.selection_objects:
-            print(area)
+            # print(area)
 
             if area.type == PFC.TYPE_TITLE:
                 self.process_title_area(area)
@@ -124,7 +124,7 @@ class PageProductTable:
                             if str(ext_series).lower() == str(self._series_name).lower():
                                 pack_selecions = ext_pckg
 
-                        print(self._item_size, self.description)
+                        # print(self._item_size, self.description)
                         (pc_ctn, sf_ctn, ctn_plt) = self.find_units_per_package(pack_selecions)
 
                         self._pieces_per_carton = pc_ctn if (pc_ctn and not str(pc_ctn) == '-') else ""
@@ -232,7 +232,8 @@ class PageProductTable:
             for i in range(1, len(self.selection_objects)):
                 self.selection_objects[i].set_type()
         except IndexError:
-            print(f"No selections on page {self._pagenumber}")
+            pass
+            # print(f"No selections on page {self._pagenumber}")
 
     def collect_packaging_selections(self):
         """ :return a list of packaging selections of the current page"""
@@ -322,7 +323,7 @@ class PageProductTable:
         if upp_options:
             upp_options.sort(reverse=True, key=lambda item: item[0])
 
-            print("upp_options", upp_options)
+            # print("upp_options", upp_options)
 
             pc_ctn = upp_options[0][1]  # units per carton is the 2nd item of the first tuple of the sorted tuple list
             sf_ctn = upp_options[0][2]

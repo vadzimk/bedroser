@@ -26,7 +26,7 @@ class PdfLine:
         # self._is_color_table_row = self.is_color_table_row()
         self._is_product_table_row = self.is_product_table_row()
 
-        print(self._line_len, self._num_blanks, self._tabula_line)
+        # print(self._line_len, self._num_blanks, self._tabula_line)
 
         # print(len(self._row), self._row)
 

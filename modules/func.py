@@ -21,7 +21,7 @@ from PyPDF2 import PdfFileReader
 def cleanup():
     if os.path.exists(PR.DIR_PROJECT) and os.path.isdir(PR.DIR_PROJECT):
         shutil.rmtree(PR.DIR_PROJECT)
-        print("Old project flies deleted.")
+        print(f"Old project flies deleted.")
 
 
 def create_project():
