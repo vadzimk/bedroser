@@ -15,6 +15,7 @@ def main():
         create_project()
     except PermissionError:
         print(f"Access to the project folder denied\nClose applications that might use it and try again")
+        input(f"Press any key to close the window")
         return
 
     args = sys.argv  # get the list of arguments
@@ -111,6 +112,7 @@ def main():
         price_list.export_cumulative_dict(PR.DOC_PRODUCT_TABLE)
     except PermissionError:
         print(f"Access to {PR.DOC_PRODUCT_TABLE} denied\nClose applications that might use it and try again")
+        input(f"Press any key to close the window")
         return
 
     end_time = time.time()
@@ -129,6 +131,7 @@ def main():
         except PermissionError:
             print(
                 f"Access to {PR.DOC_UOM} or {PR.DOC_TARGET} denied\nClose applications that might use it and try again")
+            input(f"Press any key to close the window")
             return
 
     print(f"Task finished.\n"
