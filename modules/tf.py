@@ -28,7 +28,7 @@ def main():
         create_target_and_uom()
     except PermissionError:
         print(f"Access to {PR.DOC_UOM} or {PR.DOC_TARGET} denied\nClose applications that might use it and try again")
-        input(f"Press any key to close the window")
+        input(f"Press any key to close this window")
         return
 
     print(f"Task finished.\n"
