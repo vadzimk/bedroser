@@ -79,7 +79,7 @@ class Target:
             if pieces_per_carton:
                 sales_description += str(pieces_per_carton) + " EA/BX "
             if sf_per_carton:
-                sales_description += str(Decimal(sf_per_carton).normalize()) + " SF/BX "
+                sales_description += str(Decimal(sf_per_carton)) + " SF/BX "
             if ctn_per_plt:
                 sales_description += str(ctn_per_plt) + " BX/PLT"
 
