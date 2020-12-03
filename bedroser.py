@@ -3,11 +3,13 @@ import sys
 import time
 from modules.PdfDoc import PdfDoc
 from modules.tf import create_target_and_uom
+from datetime import date
 
-list_of_pages_with_doubled_rows = None
+
 
 
 def main():
+
     DOC_SELECTIONS_COORDINATES = find_tabula_template_json_filename()
     if not DOC_SELECTIONS_COORDINATES:
         input(f"Press Enter to close this window")
@@ -127,11 +129,12 @@ def main():
 
     create_target_uom_files = input(f"Create target.csv, uom.csv (y/n) ? ")
 
-    print(f"Creating template file and UOM file...")
+
     if create_target_uom_files.lower() == 'y':
+        print(f"Creating template file and UOM file...")
         try:
             create_target_and_uom()
-        except PermissionError:
+        except:
             print(
                 f"Access to {PR.DOC_UOM} or {PR.DOC_TARGET} denied\nClose applications that might use it and try again")
             input(f"Press Enter to close this window")
