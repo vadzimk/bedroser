@@ -36,7 +36,3 @@ tabula-template.json file
 product_table.csv - *structured data extracted from all fields of tables*   
 target.csv - *client's template for upload in ERP*  
 uom.csv - *another client's template containing units conversion for upload in ERP*  
-
-###### Notes
-Current catalog contains Sequel Encore on pp 88-113  
-Double spaced page: 104
